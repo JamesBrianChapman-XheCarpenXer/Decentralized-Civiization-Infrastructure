@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="srcp:did" content="did:srcp:app/explorer">
+<title>SRCP Explorer - Search & Discover</title>
+<style>
+.srcp-nav{display:flex;gap:12px;padding:10px;background:#0f1522;border-bottom:1px solid #1e2740;position:sticky;top:0;z-index:999;flex-wrap:wrap}
+.srcp-nav a{color:#9bdcff;text-decoration:none;font-weight:600;font-size:13px;padding:4px 8px;border-radius:4px;transition:background .2s}
+.srcp-nav a:hover{background:rgba(155,220,255,.1)}
+
+:root {
+  --bg: #0a0e14;
+  --panel: #0f141b;
+  --card: #141a23;
+  --line: #1f2733;
+  --pri: #5eead4;
+  --sec: #38bdf8;
+  --warn: #facc15;
+  --err: #f87171;
+  --txt: #e5e7eb;
+  --dim: #9ca3af;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--txt);
+  font-family: system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+header {
+  text-align: center;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, rgba(94,234,212,0.1), rgba(56,189,248,0.1));
+  border-radius: 16px;
+  margin-bottom: 30px;
+}
+
+h1 {
+  font-size: 3rem;
+  background: linear-gradient(135deg, var(--pri), var(--sec));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  color: var(--dim);
+  font-size: 1.2rem;
+}
+
+.search-box {
+  max-width: 800px;
+  margin: 0 auto 40px;
+  position: relative;
+}
+
+.search-input {
+  width: 100%;
+  padding: 20px 60px 20px 20px;
+  background: var(--panel);
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  color: var(--txt);
+  font-size: 1.1rem;
+  transition: all 0.3s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--pri);
+  box-shadow: 0 0 20px rgba(94,234,212,0.2);
+}
+
+.search-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: linear-gradient(135deg, var(--pri), var(--sec));
+  border: none;
+  color: #000;
+  width: 45px;
+  height: 45px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.search-btn:hover {
+  transform: translateY(-50%) scale(1.05);
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.filter-tab {
+  padding: 10px 20px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--txt);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.filter-tab:hover, .filter-tab.active {
+  border-color: var(--pri);
+  background: rgba(94,234,212,0.1);
+  color: var(--pri);
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.result-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.result-card:hover {
+  border-color: var(--pri);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(94,234,212,0.15);
+}
+
+.result-icon {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+}
+
+.result-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--pri);
+  margin-bottom: 8px;
+}
+
+.result-description {
+  color: var(--dim);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.result-meta {
+  display: flex;
+  gap: 15px;
+  font-size: 0.85rem;
+  color: var(--dim);
+}
+
+.result-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  background: rgba(94,234,212,0.1);
+  border: 1px solid rgba(94,234,212,0.3);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: var(--pri);
+  margin-right: 6px;
+  margin-top: 6px;
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--pri), var(--sec));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.stat-label {
+  color: var(--dim);
+  font-size: 0.9rem;
+  margin-top: 5px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--dim);
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  opacity: 0.4;
+}
+
+@media (max-width: 768px) {
+  h1 { font-size: 2rem; }
+  .results-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+
+
+<body>
+  <nav class="srcp-nav">
+  <a href="./srcp-complete-explorer.html">🧭 Explorer</a>
+  <a href="./srcp-dashboard.html">📊 Dashboard</a>
+  <a href="./marketplace.html">🛒 Marketplace</a>
+  <a href="./truthrank.html">🧠 TruthRank</a>
+  <a href="./govchain.html">🏛️ GovChain</a>
+  <a href="./knowledgechain.html">📚 Knowledge</a>
+  <a href="./skillswap.html">💼 SkillSwap</a>
+  <a href="./decentralbank.html">💰 Bank</a>
+  <a href="./messenger.html">💬 Messenger</a>
+  <a href="./uyea.html">🤖 UYEA</a>
+  <a href="./complete-demo.html">🔥 Demo</a>
+  <a href="./truthrank-portal.html">🏠 Portal</a>
+  <a href="./srcp-jsonflow-platform.html">🔥 Json-Flow</a>
+  <a href="./truthrank-test-suite.html">🏠 Test</a>
+  <a href="./olSearch.html">🏠 Address-Manager</a>
+  <a href="./token-platform.html">🏠 Token</a>
+</nav>
+
+<div class="container">
+  <header>
+    <h1>🧭 SRCP Explorer</h1>
+    <p class="subtitle">Search across the Sovereign Reputation Protocol ecosystem</p>
+  </header>
+
+  <div class="search-box">
+    <input type="text" class="search-input" id="searchInput" placeholder="Search apps, users, content, karma, transactions..." />
+    <button class="search-btn" onclick="performSearch()">🔍</button>
+  </div>
+
+  <div class="filter-tabs">
+    <button class="filter-tab active" data-filter="all" onclick="setFilter('all')">All</button>
+    <button class="filter-tab" data-filter="apps" onclick="setFilter('apps')">Apps</button>
+    <button class="filter-tab" data-filter="users" onclick="setFilter('users')">Users</button>
+    <button class="filter-tab" data-filter="content" onclick="setFilter('content')">Content</button>
+    <button class="filter-tab" data-filter="transactions" onclick="setFilter('transactions')">Transactions</button>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-value" id="appsCount">8</div>
+      <div class="stat-label">Active Apps</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="usersCount">1,247</div>
+      <div class="stat-label">Total Users</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="transactionsCount">24.5K</div>
+      <div class="stat-label">Transactions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="karmaCount">850K</div>
+      <div class="stat-label">Total Karma</div>
+    </div>
+  </div>
+
+  <div class="results-grid" id="resultsGrid">
+    <!-- Results will be inserted here -->
+  </div>
+
+  <div class="empty-state" id="emptyState" style="display: none;">
+    <div class="empty-icon">🔍</div>
+    <p>No results found. Try a different search term.</p>
+  </div>
+</div>
+
+<script>
+let currentFilter = 'all';
+let allResults = [];
+
+// Sample data - in production this would come from the SRCP network
+const sampleData = {
+  apps: [
+    { icon: '🛒', title: 'Marketplace', description: 'Decentralized marketplace for goods and services with reputation-based trust', tags: ['commerce', 'p2p'], karma: '45K', users: '342', link: 'marketplace.html' },
+    { icon: '🧠', title: 'TruthRank', description: 'AI-powered content verification and reputation scoring system', tags: ['ai', 'verification'], karma: '89K', users: '521', link: 'truthrank.html' },
+    { icon: '🏛️', title: 'GovChain', description: 'Decentralized governance and voting platform with karma weighting', tags: ['governance', 'voting'], karma: '67K', users: '298', link: 'govchain.html' },
+    { icon: '📚', title: 'KnowledgeChain', description: 'Collaborative knowledge base with reputation rewards', tags: ['education', 'wiki'], karma: '52K', users: '445', link: 'knowledgechain.html' },
+    { icon: '💼', title: 'SkillSwap', description: 'Freelance platform with reputation-based matching', tags: ['freelance', 'skills'], karma: '41K', users: '387', link: 'skillswap.html' },
+    { icon: '💰', title: 'DecentralBank', description: 'P2P lending with reputation as collateral', tags: ['finance', 'lending'], karma: '73K', users: '215', link: 'decentralbank.html' },
+    { icon: '💬', title: 'Messenger', description: 'Encrypted P2P messaging with reputation verification', tags: ['messaging', 'privacy'], karma: '38K', users: '892', link: 'messenger.html' },
+    { icon: '🤖', title: 'UYEA', description: 'AI assistant with ethical alignment and reputation tracking', tags: ['ai', 'assistant'], karma: '55K', users: '634', link: 'uyea.html' }
+  ],
+  users: [
+    { icon: '👤', title: 'alice.srcp', description: 'DID: did:srcp:user:alice123', tags: ['creator', 'verified'], karma: '1250', transactions: '47' },
+    { icon: '👤', title: 'bob.srcp', description: 'DID: did:srcp:user:bob456', tags: ['developer', 'contributor'], karma: '890', transactions: '32' },
+    { icon: '👤', title: 'carol.srcp', description: 'DID: did:srcp:user:carol789', tags: ['expert', 'moderator'], karma: '2150', transactions: '89' }
+  ],
+  content: [
+    { icon: '📄', title: 'SRCP Whitepaper v6', description: 'Complete technical specification of the protocol', tags: ['documentation', 'technical'], karma: '450', views: '2.3K' },
+    { icon: '🎥', title: 'Tutorial: Getting Started', description: 'Video guide for new users joining SRCP', tags: ['tutorial', 'video'], karma: '320', views: '1.8K' },
+    { icon: '📊', title: 'Q4 Analytics Report', description: 'Network statistics and growth metrics', tags: ['analytics', 'report'], karma: '280', views: '945' }
+  ],
+  transactions: [
+    { icon: '💸', title: 'Transfer: 500 SRCP', description: 'alice.srcp → bob.srcp', tags: ['transfer', 'recent'], karma: '2', time: '2 min ago' },
+    { icon: '⭐', title: 'Karma Update: +45', description: 'Content quality bonus awarded', tags: ['karma', 'reward'], karma: '45', time: '15 min ago' },
+    { icon: '🔄', title: 'Federation Sync', description: '3 nodes synchronized reputation data', tags: ['federation', 'sync'], karma: '0', time: '1 hour ago' }
+  ]
+};
+
+function initializeExplorer() {
+  // Combine all data
+  allResults = [
+    ...sampleData.apps.map(item => ({ ...item, type: 'apps' })),
+    ...sampleData.users.map(item => ({ ...item, type: 'users' })),
+    ...sampleData.content.map(item => ({ ...item, type: 'content' })),
+    ...sampleData.transactions.map(item => ({ ...item, type: 'transactions' }))
+  ];
+  
+  displayResults(allResults);
+}
+
+function setFilter(filter) {
+  currentFilter = filter;
+  
+  // Update active tab
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.classList.remove('active');
+    if (tab.dataset.filter === filter) {
+      tab.classList.add('active');
+    }
+  });
+  
+  performSearch();
+}
+
+function performSearch() {
+  const query = document.getElementById('searchInput').value.toLowerCase();
+  let filtered = allResults;
+  
+  // Filter by type
+  if (currentFilter !== 'all') {
+    filtered = filtered.filter(item => item.type === currentFilter);
+  }
+  
+  // Filter by search query
+  if (query) {
+    filtered = filtered.filter(item => 
+      item.title.toLowerCase().includes(query) ||
+      item.description.toLowerCase().includes(query) ||
+      item.tags.some(tag => tag.toLowerCase().includes(query))
+    );
+  }
+  
+  displayResults(filtered);
+}
+
+function displayResults(results) {
+  const grid = document.getElementById('resultsGrid');
+  const emptyState = document.getElementById('emptyState');
+  
+  if (results.length === 0) {
+    grid.style.display = 'none';
+    emptyState.style.display = 'block';
+    return;
+  }
+  
+  grid.style.display = 'grid';
+  emptyState.style.display = 'none';
+  
+  grid.innerHTML = results.map(item => `
+    <div class="result-card" onclick="${item.link ? `window.location.href='${item.link}'` : ''}">
+      <div class="result-icon">${item.icon}</div>
+      <div class="result-title">${item.title}</div>
+      <div class="result-description">${item.description}</div>
+      <div class="result-meta">
+        ${item.karma ? `<span>⚡ ${item.karma} Karma</span>` : ''}
+        ${item.users ? `<span>👥 ${item.users} Users</span>` : ''}
+        ${item.transactions ? `<span>💸 ${item.transactions} Txns</span>` : ''}
+        ${item.views ? `<span>👁️ ${item.views} Views</span>` : ''}
+        ${item.time ? `<span>⏱️ ${item.time}</span>` : ''}
+      </div>
+      <div>
+        ${item.tags.map(tag => `<span class="result-tag">${tag}</span>`).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+// Search on Enter key
+document.addEventListener('DOMContentLoaded', () => {
+  initializeExplorer();
+  
+  document.getElementById('searchInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      performSearch();
+    }
+  });
+  
+  // Simulate live data updates
+  setInterval(() => {
+    const counts = ['appsCount', 'usersCount', 'transactionsCount', 'karmaCount'];
+    counts.forEach(id => {
+      const elem = document.getElementById(id);
+      if (elem && Math.random() > 0.7) {
+        const current = elem.textContent;
+        const num = parseFloat(current.replace(/[^0-9.]/g, ''));
+        const isK = current.includes('K');
+        const newNum = num + (Math.random() * 0.1);
+        elem.textContent = isK ? newNum.toFixed(1) + 'K' : Math.round(newNum);
+      }
+    });
+  }, 5000);
+});
+</script>
+
+</body>
+</html>

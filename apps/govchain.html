@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="srcp:did" content="did:srcp:app/govchain">
+  <title>GovChain - Decentralized Governance</title>
+  <style>
+    :root {
+      --bg: #0a0e27;
+      --card: #1a1f3a;
+      --border: #2d3654;
+      --accent: #00ffcc;
+      --pink: #ff4da6;
+      --text: #e8ecf4;
+      --dim: #8892a6;
+      --success: #00ff88;
+      --danger: #ff3366;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Space Grotesk', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .nav { display: flex; gap: 12px; padding: 12px 16px; background: #0f1522; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .nav a { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 13px; padding: 6px 12px; border-radius: 6px; transition: background 0.2s; }
+    .nav a:hover { background: rgba(0,255,204,0.1); }
+    .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+    header { background: linear-gradient(135deg, var(--card), #2a1f4a); border-radius: 16px; padding: 32px; margin-bottom: 32px; border: 1px solid var(--border); }
+    h1 { font-size: 2.5rem; background: linear-gradient(135deg, var(--accent), var(--pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
+    .subtitle { color: var(--dim); font-size: 1.1rem; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .stat-value { font-size: 2rem; font-weight: 700; color: var(--accent); }
+    .stat-label { color: var(--dim); font-size: 0.9rem; margin-top: 4px; }
+    .actions { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+    .btn { padding: 12px 24px; background: linear-gradient(135deg, var(--accent), #00ccaa); border: none; border-radius: 10px; color: var(--bg); font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,255,204,0.3); }
+    .btn-secondary { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+    .btn-secondary:hover { border-color: var(--accent); }
+    .grid { display: grid; gap: 20px; }
+    .proposal { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; transition: all 0.2s; }
+    .proposal:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .proposal-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px; }
+    .proposal-title { font-size: 1.3rem; font-weight: 600; }
+    .badge { padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+    .badge-active { background: rgba(0,255,136,0.15); color: var(--success); border: 1px solid var(--success); }
+    .badge-passed { background: rgba(0,255,204,0.15); color: var(--accent); border: 1px solid var(--accent); }
+    .badge-rejected { background: rgba(255,51,102,0.15); color: var(--danger); border: 1px solid var(--danger); }
+    .proposal-desc { color: var(--dim); margin-bottom: 16px; line-height: 1.6; }
+    .proposal-meta { display: flex; gap: 20px; font-size: 0.9rem; color: var(--dim); margin-bottom: 16px; }
+    .vote-bar { height: 12px; background: rgba(0,0,0,0.3); border-radius: 6px; overflow: hidden; display: flex; margin-bottom: 12px; }
+    .vote-for { background: linear-gradient(90deg, var(--success), #00ff88); height: 100%; }
+    .vote-against { background: linear-gradient(90deg, var(--danger), #ff6699); height: 100%; }
+    .vote-counts { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 16px; }
+    .vote-for-count { color: var(--success); }
+    .vote-against-count { color: var(--danger); }
+    .vote-actions { display: flex; gap: 10px; }
+    .vote-btn { padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: 1px solid; }
+    .vote-btn.for { background: rgba(0,255,136,0.15); border-color: var(--success); color: var(--success); }
+    .vote-btn.against { background: rgba(255,51,102,0.15); border-color: var(--danger); color: var(--danger); }
+    .vote-btn:hover { transform: translateY(-1px); }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(10,14,39,0.95); align-items: center; justify-content: center; z-index: 1000; }
+    .modal.active { display: flex; }
+    .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 32px; max-width: 600px; width: 90%; }
+    .modal h2 { margin-bottom: 24px; color: var(--accent); }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; margin-bottom: 8px; color: var(--dim); }
+    input, textarea, select { width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: inherit; }
+    input:focus, textarea:focus { border-color: var(--accent); outline: none; }
+    textarea { min-height: 120px; resize: vertical; }
+    .close-btn { position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--dim); font-size: 24px; cursor: pointer; }
+.srcp-nav{display:flex;gap:12px;padding:10px;background:#0f1522;border-bottom:1px solid #1e2740;position:sticky;top:0;z-index:999;flex-wrap:wrap}
+.srcp-nav a{color:#9bdcff;text-decoration:none;font-weight:600;font-size:13px;padding:4px 8px;border-radius:4px;transition:background .2s}
+.srcp-nav a:hover{background:rgba(155,220,255,.1)}
+  </style>
+
+</head>
+<body>
+    
+
+  <nav class="srcp-nav">
+  <a href="./srcp-complete-explorer.html">🧭 Explorer</a>
+  <a href="./srcp-dashboard.html">📊 Dashboard</a>
+  <a href="./marketplace.html">🛒 Marketplace</a>
+  <a href="./truthrank.html">🧠 TruthRank</a>
+  <a href="./govchain.html">🏛️ GovChain</a>
+  <a href="./knowledgechain.html">📚 Knowledge</a>
+  <a href="./skillswap.html">💼 SkillSwap</a>
+  <a href="./decentralbank.html">💰 Bank</a>
+  <a href="./messenger.html">💬 Messenger</a>
+  <a href="./uyea.html">🤖 UYEA</a>
+  <a href="./complete-demo.html">🔥 Demo</a>
+  <a href="./truthrank-portal.html">🏠 Portal</a>
+  <a href="./srcp-jsonflow-platform.html">🔥 Json-Flow</a>
+  <a href="./truthrank-test-suite.html">🏠 Test</a>
+  <a href="./olSearch.html">🏠 Address-Manager</a>
+  <a href="./token-platform.html">🏠 Token</a>
+   <a href="./srcp-jbc.html">🏠 PLATFORM</a>
+</nav>
+ 
+
+  <div class="container">
+    <header>
+      <h1>🏛️ GovChain</h1>
+      <p class="subtitle">Decentralized Governance • Quadratic Voting • Transparent Decisions</p>
+    </header>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value" id="activeProposals">5</div>
+        <div class="stat-label">Active Proposals</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="totalVotes">1,247</div>
+        <div class="stat-label">Total Votes Cast</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="votingPower">850</div>
+        <div class="stat-label">Your Voting Power</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="participation">78%</div>
+        <div class="stat-label">Participation Rate</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" onclick="showProposalModal()" data-testid="create-proposal-btn">+ Create Proposal</button>
+      <button class="btn btn-secondary" onclick="filterProposals('active')">Active</button>
+      <button class="btn btn-secondary" onclick="filterProposals('passed')">Passed</button>
+      <button class="btn btn-secondary" onclick="filterProposals('all')">All</button>
+    </div>
+
+    <div class="grid" id="proposalsGrid"></div>
+  </div>
+
+  <div class="modal" id="proposalModal">
+    <div class="modal-content" style="position: relative;">
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+      <h2>Create New Proposal</h2>
+      <form id="proposalForm" onsubmit="submitProposal(event)">
+        <div class="form-group">
+          <label>Proposal Title</label>
+          <input type="text" id="proposalTitle" placeholder="Enter a clear, concise title" required>
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="proposalCategory" required>
+            <option value="protocol">Protocol Changes</option>
+            <option value="treasury">Treasury Allocation</option>
+            <option value="governance">Governance Rules</option>
+            <option value="community">Community Initiatives</option>
+            <option value="technical">Technical Upgrades</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="proposalDesc" placeholder="Describe your proposal in detail..." required></textarea>
+        </div>
+        <div class="form-group">
+          <label>Voting Duration (days)</label>
+          <select id="proposalDuration">
+            <option value="3">3 days</option>
+            <option value="7" selected>7 days</option>
+            <option value="14">14 days</option>
+          </select>
+        </div>
+        <button type="submit" class="btn" style="width: 100%;">Submit Proposal (10 tokens)</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Demo proposals
+    let proposals = [
+      { id: 1, title: 'Increase Staking Rewards by 5%', category: 'protocol', desc: 'Proposal to increase the base staking rewards from 8% to 13% APY to incentivize long-term holding and network security.', status: 'active', votesFor: 523, votesAgainst: 187, author: 'alice_gov', created: Date.now() - 86400000 * 2 },
+      { id: 2, title: 'Fund Community Education Program', category: 'treasury', desc: 'Allocate 50,000 SRCP tokens to fund educational content creation and workshops about decentralized governance.', status: 'active', votesFor: 412, votesAgainst: 89, author: 'edu_dao', created: Date.now() - 86400000 * 3 },
+      { id: 3, title: 'Implement Quadratic Voting', category: 'governance', desc: 'Adopt quadratic voting mechanism to reduce plutocracy and give more weight to broader consensus.', status: 'passed', votesFor: 891, votesAgainst: 234, author: 'gov_reform', created: Date.now() - 86400000 * 10 },
+      { id: 4, title: 'Cross-Chain Bridge Integration', category: 'technical', desc: 'Build bridges to Ethereum and Polygon networks for improved interoperability and liquidity.', status: 'active', votesFor: 678, votesAgainst: 156, author: 'tech_lead', created: Date.now() - 86400000 * 1 },
+      { id: 5, title: 'Reduce Proposal Threshold', category: 'governance', desc: 'Lower the minimum karma requirement for creating proposals from 500 to 300 to encourage participation.', status: 'rejected', votesFor: 234, votesAgainst: 567, author: 'community_voice', created: Date.now() - 86400000 * 15 }
+    ];
+
+    let currentFilter = 'all';
+
+    function renderProposals() {
+      const grid = document.getElementById('proposalsGrid');
+      const filtered = currentFilter === 'all' ? proposals : proposals.filter(p => p.status === currentFilter);
+      
+      grid.innerHTML = filtered.map(p => {
+        const total = p.votesFor + p.votesAgainst;
+        const forPct = total > 0 ? (p.votesFor / total * 100).toFixed(0) : 50;
+        const againstPct = 100 - forPct;
+        const badgeClass = p.status === 'active' ? 'badge-active' : p.status === 'passed' ? 'badge-passed' : 'badge-rejected';
+        
+        return `
+          <div class="proposal" data-testid="proposal-${p.id}">
+            <div class="proposal-header">
+              <div class="proposal-title">${p.title}</div>
+              <span class="badge ${badgeClass}">${p.status.toUpperCase()}</span>
+            </div>
+            <div class="proposal-desc">${p.desc}</div>
+            <div class="proposal-meta">
+              <span>📁 ${p.category}</span>
+              <span>👤 ${p.author}</span>
+              <span>🕐 ${Math.floor((Date.now() - p.created) / 86400000)} days ago</span>
+            </div>
+            <div class="vote-bar">
+              <div class="vote-for" style="width: ${forPct}%"></div>
+              <div class="vote-against" style="width: ${againstPct}%"></div>
+            </div>
+            <div class="vote-counts">
+              <span class="vote-for-count">✓ ${p.votesFor.toLocaleString()} For (${forPct}%)</span>
+              <span class="vote-against-count">✗ ${p.votesAgainst.toLocaleString()} Against (${againstPct}%)</span>
+            </div>
+            ${p.status === 'active' ? `
+              <div class="vote-actions">
+                <button class="vote-btn for" onclick="vote(${p.id}, 'for')" data-testid="vote-for-${p.id}">Vote For</button>
+                <button class="vote-btn against" onclick="vote(${p.id}, 'against')" data-testid="vote-against-${p.id}">Vote Against</button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+      
+      // Update stats
+      document.getElementById('activeProposals').textContent = proposals.filter(p => p.status === 'active').length;
+      document.getElementById('totalVotes').textContent = proposals.reduce((sum, p) => sum + p.votesFor + p.votesAgainst, 0).toLocaleString();
+    }
+
+    function filterProposals(filter) {
+      currentFilter = filter;
+      renderProposals();
+    }
+
+    function vote(proposalId, type) {
+      const proposal = proposals.find(p => p.id === proposalId);
+      if (!proposal || proposal.status !== 'active') return;
+      
+      const votingPower = parseInt(localStorage.getItem('srcp:karma') || '850');
+      const voteWeight = Math.floor(Math.sqrt(votingPower)); // Quadratic voting
+      
+      if (type === 'for') {
+        proposal.votesFor += voteWeight;
+      } else {
+        proposal.votesAgainst += voteWeight;
+      }
+      
+      renderProposals();
+      alert(`Vote recorded! Your voting weight: ${voteWeight} (based on ${votingPower} karma)`);
+    }
+
+    function showProposalModal() {
+      document.getElementById('proposalModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('proposalModal').classList.remove('active');
+    }
+
+    function submitProposal(e) {
+      e.preventDefault();
+      const title = document.getElementById('proposalTitle').value;
+      const category = document.getElementById('proposalCategory').value;
+      const desc = document.getElementById('proposalDesc').value;
+      
+      const newProposal = {
+        id: proposals.length + 1,
+        title,
+        category,
+        desc,
+        status: 'active',
+        votesFor: 0,
+        votesAgainst: 0,
+        author: 'sovereign_user',
+        created: Date.now()
+      };
+      
+      proposals.unshift(newProposal);
+      closeModal();
+      document.getElementById('proposalForm').reset();
+      renderProposals();
+      alert('Proposal submitted successfully!');
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      const karma = localStorage.getItem('srcp:karma') || '850';
+      document.getElementById('votingPower').textContent = karma;
+      renderProposals();
+    });
+  </script>
+</body>
+</html>

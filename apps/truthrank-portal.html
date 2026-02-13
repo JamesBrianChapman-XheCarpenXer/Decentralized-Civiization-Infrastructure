@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TruthRank - Test & Demo Portal</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+      color: #c9d1d9;
+      min-height: 100vh;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    header {
+      text-align: center;
+      padding: 3rem 0;
+    }
+    h1 {
+      font-size: 3.5rem;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #58a6ff, #8a4fff, #ff6ac1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradient 3s ease infinite;
+    }
+    @keyframes gradient {
+      0%, 100% { filter: hue-rotate(0deg); }
+      50% { filter: hue-rotate(20deg); }
+    }
+    .subtitle {
+      font-size: 1.3rem;
+      color: #8b949e;
+      margin-bottom: 0.5rem;
+    }
+    .status {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background: rgba(63, 185, 80, 0.15);
+      border: 1px solid #3fb950;
+      border-radius: 999px;
+      color: #3fb950;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-top: 1rem;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+    .card {
+      background: rgba(22, 27, 34, 0.8);
+      border: 1px solid #30363d;
+      border-radius: 16px;
+      padding: 2rem;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #58a6ff, #8a4fff);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .card:hover {
+      border-color: #58a6ff;
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(88, 166, 255, 0.2);
+    }
+    .card:hover::before {
+      opacity: 1;
+    }
+    .card-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+    .card-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #58a6ff;
+      margin-bottom: 1rem;
+    }
+    .card-description {
+      color: #8b949e;
+      margin-bottom: 1.5rem;
+      line-height: 1.7;
+    }
+    .card-features {
+      list-style: none;
+      margin-bottom: 1.5rem;
+    }
+    .card-features li {
+      padding: 0.5rem 0;
+      padding-left: 1.5rem;
+      position: relative;
+      color: #c9d1d9;
+      font-size: 0.95rem;
+    }
+    .card-features li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: #3fb950;
+      font-weight: bold;
+    }
+    .btn {
+      display: inline-block;
+      padding: 0.9rem 1.8rem;
+      background: linear-gradient(135deg, #58a6ff, #8a4fff);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      font-size: 1rem;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(88, 166, 255, 0.4);
+    }
+    .btn-secondary {
+      background: #21262d;
+      color: #8b949e;
+      margin-left: 0.5rem;
+    }
+    .btn-secondary:hover {
+      background: #30363d;
+      color: #c9d1d9;
+    }
+    footer {
+      text-align: center;
+      margin-top: 4rem;
+      padding: 2rem;
+      color: #8b949e;
+      border-top: 1px solid #30363d;
+    }
+    .footer-links {
+      margin-top: 1rem;
+    }
+    .footer-links a {
+      color: #58a6ff;
+      text-decoration: none;
+      margin: 0 1rem;
+    }
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.3rem 0.7rem;
+      background: rgba(138, 79, 255, 0.15);
+      border: 1px solid #8a4fff;
+      border-radius: 999px;
+      color: #8a4fff;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-left: 0.5rem;
+    }
+    .badge.new {
+      background: rgba(63, 185, 80, 0.15);
+      border-color: #3fb950;
+      color: #3fb950;
+    }
+    @media (max-width: 768px) {
+      .cards {
+        grid-template-columns: 1fr;
+      }
+      h1 {
+        font-size: 2.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="srcp-nav">
+  <a href="./srcp-complete-explorer.html">🧭 Explorer</a>
+  <a href="./srcp-dashboard.html">📊 Dashboard</a>
+  <a href="./marketplace.html">🛒 Marketplace</a>
+  <a href="./truthrank.html">🧠 TruthRank</a>
+  <a href="./govchain.html">🏛️ GovChain</a>
+  <a href="./knowledgechain.html">📚 Knowledge</a>
+  <a href="./skillswap.html">💼 SkillSwap</a>
+  <a href="./decentralbank.html">💰 Bank</a>
+  <a href="./messenger.html">💬 Messenger</a>
+  <a href="./uyea.html">🤖 UYEA</a>
+  <a href="./complete-demo.html">🔥 Demo</a>
+  <a href="./truthrank-portal.html">🏠 Portal</a>
+  <a href="./srcp-jsonflow-platform.html">🔥 Json-Flow</a>
+  <a href="./truthrank-test-suite.html">🏠 Test</a>
+  <a href="./olSearch.html">🏠 Address-Manager</a>
+  <a href="./token-platform.html">💰Token</a>
+   <a href="./public-feed.html">💰Public-Feed</a>
+</nav>
+  <div class="container">
+    <header>
+      <h1>🧠 TruthRank</h1>
+      <p class="subtitle">Decentralized Fact-Checking Platform</p>
+      <div class="status">✅ All Systems Operational</div>
+    </header>
+
+    <div class="cards">
+      <!-- Original Fixed Version -->
+      <div class="card">
+        <div class="card-icon">🔧</div>
+        <div class="card-title">
+          Original (Fixed)
+          <span class="badge">FIXED</span>
+        </div>
+        <div class="card-description">
+          The original TruthRank application with all bugs fixed and proper ES6 module imports.
+        </div>
+        <ul class="card-features">
+          <li>Working module imports</li>
+          <li>Demo claims pre-loaded</li>
+          <li>Full voting functionality</li>
+          <li>Claim submission system</li>
+        </ul>
+        <a href="truthrank.html" class="btn">Launch App</a>
+      </div>
+
+      <!-- Enhanced Version -->
+      <div class="card">
+        <div class="card-icon">✨</div>
+        <div class="card-title">
+          Enhanced Version
+          <span class="badge new">NEW</span>
+        </div>
+        <div class="card-description">
+          Improved version with better UI/UX, status dashboard, and enhanced error handling.
+        </div>
+        <ul class="card-features">
+          <li>User status dashboard</li>
+          <li>Real-time vote counts</li>
+          <li>Improved modal controls</li>
+          <li>Security enhancements</li>
+          <li>Better error messages</li>
+        </ul>
+        <a href="truthrank-fixed.html" class="btn">Launch Enhanced</a>
+      </div>
+
+      <!-- Test Suite -->
+      <div class="card">
+        <div class="card-icon">🧪</div>
+        <div class="card-title">
+          Test Suite
+          <span class="badge new">NEW</span>
+        </div>
+        <div class="card-description">
+          Comprehensive automated testing suite with 19+ tests covering all functionality.
+        </div>
+        <ul class="card-features">
+          <li>8 Basic functionality tests</li>
+          <li>6 Advanced feature tests</li>
+          <li>5 Stress & performance tests</li>
+          <li>Real-time test results</li>
+          <li>Engine state inspector</li>
+        </ul>
+        <a href="truthrank-test-suite.html" class="btn">Run Tests</a>
+      </div>
+
+      <!-- Documentation -->
+      <div class="card">
+        <div class="card-icon">📚</div>
+        <div class="card-title">Documentation</div>
+        <div class="card-description">
+          Complete documentation of fixes, architecture, and usage instructions.
+        </div>
+        <ul class="card-features">
+          <li>Problem diagnosis</li>
+          <li>Fix explanations</li>
+          <li>API reference</li>
+          <li>Test coverage report</li>
+          <li>Performance benchmarks</li>
+        </ul>
+        <a href="../TRUTHRANK_FIX_DOCUMENTATION.md" class="btn btn-secondary">View Docs</a>
+      </div>
+    </div>
+
+    <footer>
+      <p><strong>TruthRank Engine v1.1</strong> • Powered by SRCP</p>
+      <p style="margin-top: 0.5rem; font-size: 0.9rem;">
+        Decentralized Fact-Checking • Community Consensus • On-Chain Verdicts
+      </p>
+      <div class="footer-links">
+        <a href="index.html">← Back to SRCP Dashboard</a>
+        <a href="https://github.com/anthropics/srcp" target="_blank">GitHub</a>
+        <a href="../README.md">Main README</a>
+      </div>
+      <p style="margin-top: 1.5rem; font-size: 0.85rem; color: #6e7681;">
+        Fixed and tested by Claude • February 9, 2026
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    // Add smooth scroll
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+
+    // Add animation on scroll
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '0';
+          entry.target.style.transform = 'translateY(20px)';
+          setTimeout(() => {
+            entry.target.style.transition = 'all 0.6s ease';
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+          }, 100);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.card').forEach(card => observer.observe(card));
+  </script>
+</body>
+</html>

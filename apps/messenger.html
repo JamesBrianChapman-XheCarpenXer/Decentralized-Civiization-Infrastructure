@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="srcp:did" content="did:srcp:app/messenger">
+  <meta name="srcp:app" content="messenger">
+  <title>SRCP Messenger - Bootstrap Registry</title>
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .app-container {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 320px;
+      background: #1a1a1a;
+      border-right: 1px solid #333;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid #333;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .user-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .user-details h3 {
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .user-did {
+      font-size: 11px;
+      color: #888;
+      font-family: monospace;
+    }
+
+    .registry-status {
+      background: #2a2a2a;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    .registry-status.active {
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+      border: 1px solid rgba(102, 126, 234, 0.3);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #888;
+    }
+
+    .status-dot.active {
+      background: #4ade80;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Search wrapper and autocomplete */
+    .search-wrapper {
+      position: relative;
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 10px;
+      background: #0a0a0a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    .search-box:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .autocomplete-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #1a1a1a;
+      border: 1px solid #667eea;
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+
+    .autocomplete-dropdown.active {
+      display: block;
+    }
+
+    .autocomplete-item {
+      padding: 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #2a2a2a;
+      transition: background 0.2s;
+    }
+
+    .autocomplete-item:hover,
+    .autocomplete-item.selected {
+      background: #2a2a2a;
+    }
+
+    .autocomplete-item:last-child {
+      border-bottom: none;
+    }
+
+    .autocomplete-username {
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+
+    .autocomplete-did {
+      font-size: 11px;
+      color: #888;
+      font-family: monospace;
+    }
+
+    .autocomplete-source {
+      font-size: 10px;
+      color: #667eea;
+      margin-top: 2px;
+    }
+
+    .conversation-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .conversation-item {
+      padding: 16px 20px;
+      border-bottom: 1px solid #2a2a2a;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .conversation-item:hover {
+      background: #2a2a2a;
+    }
+
+    .conversation-item.active {
+      background: #2a2a2a;
+      border-left: 3px solid #667eea;
+    }
+
+    .conversation-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .conversation-name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .conversation-time {
+      font-size: 11px;
+      color: #888;
+    }
+
+    .conversation-preview {
+      font-size: 13px;
+      color: #aaa;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .unread-badge {
+      background: #667eea;
+      color: #fff;
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+
+    /* Main Chat */
+    .main-chat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #0a0a0a;
+    }
+
+    .chat-header {
+      padding: 20px;
+      background: #1a1a1a;
+      border-bottom: 1px solid #333;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chat-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .chat-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .chat-info h3 {
+      font-size: 16px;
+      margin-bottom: 2px;
+    }
+
+    .chat-status {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .message {
+      max-width: 60%;
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .message-sent {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message-received {
+      align-self: flex-start;
+      background: #1a1a1a;
+      border-bottom-left-radius: 4px;
+    }
+
+    .message-time {
+      font-size: 11px;
+      color: rgba(255,255,255,0.6);
+      margin-top: 4px;
+    }
+
+    .message-input-container {
+      padding: 20px;
+      background: #1a1a1a;
+      border-top: 1px solid #333;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .message-input {
+      flex: 1;
+      padding: 12px 16px;
+      background: #0a0a0a;
+      border: 1px solid #333;
+      border-radius: 24px;
+      color: #fff;
+      font-size: 14px;
+      resize: none;
+      max-height: 120px;
+    }
+
+    .message-input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .send-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .send-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      text-align: center;
+      padding: 40px;
+    }
+
+    .empty-state-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #1a1a1a;
+      border: 1px solid #667eea;
+      border-radius: 12px;
+      padding: 16px 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      z-index: 10000;
+      animation: slideIn 0.3s ease-out;
+      max-width: 300px;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .notification-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #667eea;
+    }
+
+    .notification-message {
+      font-size: 13px;
+      color: #aaa;
+    }
+
+        .srcp-nav{display:flex;gap:12px;padding:10px;background:#0f1522;border-bottom:1px solid #1e2740;position:sticky;top:0;z-index:999;flex-wrap:wrap}
+    .srcp-nav a{color:#9bdcff;text-decoration:none;font-weight:600;font-size:13px;padding:4px 8px;border-radius:4px;transition:background .2s}
+    .srcp-nav a:hover{background:rgba(155,220,255,.1)}
+    
+  </style>
+</head>
+<body>
+
+  <nav class="srcp-nav">
+  <a href="./srcp-complete-explorer.html">🧭 Explorer</a>
+  <a href="./srcp-dashboard.html">📊 Dashboard</a>
+  <a href="./marketplace.html">🛒 Marketplace</a>
+  <a href="./truthrank.html">🧠 TruthRank</a>
+  <a href="./govchain.html">🏛️ GovChain</a>
+  <a href="./knowledgechain.html">📚 Knowledge</a>
+  <a href="./skillswap.html">💼 SkillSwap</a>
+  <a href="./decentralbank.html">💰 Bank</a>
+  <a href="./messenger.html">💬 Messenger</a>
+  <a href="./uyea.html">🤖 UYEA</a>
+  <a href="./complete-demo.html">🔥 Demo</a>
+  <a href="./truthrank-portal.html">🏠 Portal</a>
+  <a href="./srcp-jsonflow-platform.html">🔥 Json-Flow</a>
+  <a href="./truthrank-test-suite.html">🏠 Test</a>
+  <a href="./olSearch.html">🏠 Address-Manager</a>
+  <a href="./token-platform.html">🏠 Token</a>
+   <a href="./srcp-jbc.html">🏠 PLATFORM</a>
+</nav>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="user-info">
+          <div class="user-avatar" id="myAvatar">?</div>
+          <div class="user-details">
+            <h3 id="myUsername">Loading...</h3>
+            <div class="user-did" id="myDID">Initializing...</div>
+          </div>
+        </div>
+
+        <div class="registry-status" id="registryStatus">
+          <div class="status-dot" id="statusDot"></div>
+          <div>
+            <div id="statusText">Connecting to registry...</div>
+            <div id="registryCount" style="font-size: 10px; color: #888; margin-top: 2px;"></div>
+          </div>
+        </div>
+        
+        <div class="search-wrapper">
+          <input 
+            type="text" 
+            class="search-box" 
+            id="contactSearch"
+            placeholder="Search registered contacts..."
+            autocomplete="off"
+          >
+          <div class="autocomplete-dropdown" id="autocompleteDropdown"></div>
+        </div>
+      </div>
+
+      <div class="conversation-list" id="conversationList"></div>
+    </div>
+
+    <!-- Main Chat Area -->
+    <div class="main-chat">
+      <div id="emptyState" class="empty-state">
+        <div class="empty-state-icon">🌐</div>
+        <h2>Connected to Bootstrap Registry</h2>
+        <p style="margin-top: 8px; color: #888;">
+          All registered addresses are automatically available as contacts<br>
+          Select anyone from the registry to start messaging
+        </p>
+        <p id="registrySummary" style="margin-top: 16px; color: #667eea; font-size: 14px;">
+          Loading registry...
+        </p>
+      </div>
+
+      <div id="chatArea" style="display: none; flex: 1; display: flex; flex-direction: column;">
+        <div class="chat-header">
+          <div class="chat-title">
+            <div class="chat-avatar" id="chatAvatar">?</div>
+            <div class="chat-info">
+              <h3 id="chatName">Contact Name</h3>
+              <div class="chat-status" id="chatStatus">Offline</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="messages-container" id="messagesContainer"></div>
+
+        <div class="message-input-container">
+          <textarea 
+            class="message-input" 
+            id="messageInput"
+            placeholder="Type a message..."
+            rows="1"
+          ></textarea>
+          <button class="send-btn" onclick="sendMessage()">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeP2PWithBootstrap } from '../src/registry-integration.js';
+
+    let p2p;
+    let registry;
+    let integration;
+    let currentChat = null;
+    let autocompleteIndex = -1;
+    let filteredContacts = [];
+
+    // Initialize
+    async function init() {
+      const username = prompt('Enter your username:') || 'Anonymous';
+      
+      try {
+        const result = await initializeP2PWithBootstrap(username);
+        p2p = result.p2p || window.getP2PInternet();
+        registry = result.registry;
+        integration = result.integration;
+        
+        // Update UI with user info
+        document.getElementById('myUsername').textContent = result.username;
+        document.getElementById('myDID').textContent = result.did;
+        document.getElementById('myAvatar').textContent = result.username[0].toUpperCase();
+
+        // Update registry status
+        updateRegistryStatus();
+
+        // Setup event listeners
+        setupEventListeners();
+        setupAutocomplete();
+        loadConversations();
+
+        // Listen for new contacts from registry
+        window.addEventListener('srcp:new-contact', (event) => {
+          showNotification('New Contact', `${event.detail.username} joined the network`);
+          loadConversations();
+          updateRegistryStatus();
+        });
+
+        console.log('P2P with Bootstrap Registry ready!');
+      } catch (err) {
+        console.error('Failed to initialize:', err);
+        alert('Failed to initialize: ' + err.message);
+      }
+    }
+
+    function updateRegistryStatus() {
+      const stats = registry.getStats();
+      const statusEl = document.getElementById('registryStatus');
+      const dotEl = document.getElementById('statusDot');
+      const textEl = document.getElementById('statusText');
+      const countEl = document.getElementById('registryCount');
+
+      statusEl.classList.add('active');
+      dotEl.classList.add('active');
+      textEl.textContent = 'Registry Active';
+      countEl.textContent = `${stats.totalDIDs} registered addresses`;
+
+      // Update summary in empty state
+      const summaryEl = document.getElementById('registrySummary');
+      summaryEl.textContent = `${stats.totalDIDs} addresses registered and ready to message`;
+    }
+
+    function setupAutocomplete() {
+      const searchInput = document.getElementById('contactSearch');
+      const dropdown = document.getElementById('autocompleteDropdown');
+
+      searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim().toLowerCase();
+        
+        if (query.length === 0) {
+          dropdown.classList.remove('active');
+          filteredContacts = [];
+          autocompleteIndex = -1;
+          return;
+        }
+
+        // Get all contacts (from both manual adds and registry)
+        const contacts = p2p.getContacts();
+        
+        // Filter contacts
+        filteredContacts = contacts.filter(contact => {
+          const username = (contact.username || '').toLowerCase();
+          const did = contact.did.toLowerCase();
+          return username.includes(query) || did.includes(query);
+        });
+
+        // Display results
+        if (filteredContacts.length > 0) {
+          dropdown.innerHTML = filteredContacts.map((contact, index) => `
+            <div class="autocomplete-item" data-index="${index}">
+              <div class="autocomplete-username">${contact.username || 'Unknown'}</div>
+              <div class="autocomplete-did">${contact.did}</div>
+              ${contact.source ? `<div class="autocomplete-source">📡 ${contact.source}</div>` : ''}
+            </div>
+          `).join('');
+          dropdown.classList.add('active');
+          
+          // Add click handlers
+          dropdown.querySelectorAll('.autocomplete-item').forEach(item => {
+            item.addEventListener('click', () => {
+              const index = parseInt(item.dataset.index);
+              selectContact(filteredContacts[index]);
+            });
+          });
+        } else {
+          dropdown.innerHTML = '<div style="padding: 12px; color: #666; text-align: center;">No matches found</div>';
+          dropdown.classList.add('active');
+        }
+      });
+
+      // Keyboard navigation
+      searchInput.addEventListener('keydown', (e) => {
+        if (!dropdown.classList.contains('active')) return;
+
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          autocompleteIndex = Math.min(autocompleteIndex + 1, filteredContacts.length - 1);
+          updateAutocompleteSelection();
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          autocompleteIndex = Math.max(autocompleteIndex - 1, 0);
+          updateAutocompleteSelection();
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          if (autocompleteIndex >= 0 && filteredContacts[autocompleteIndex]) {
+            selectContact(filteredContacts[autocompleteIndex]);
+          }
+        } else if (e.key === 'Escape') {
+          dropdown.classList.remove('active');
+          autocompleteIndex = -1;
+        }
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+          dropdown.classList.remove('active');
+          autocompleteIndex = -1;
+        }
+      });
+    }
+
+    function updateAutocompleteSelection() {
+      const items = document.querySelectorAll('.autocomplete-item');
+      items.forEach((item, index) => {
+        if (index === autocompleteIndex) {
+          item.classList.add('selected');
+          item.scrollIntoView({ block: 'nearest' });
+        } else {
+          item.classList.remove('selected');
+        }
+      });
+    }
+
+    function selectContact(contact) {
+      const searchInput = document.getElementById('contactSearch');
+      const dropdown = document.getElementById('autocompleteDropdown');
+      
+      searchInput.value = '';
+      dropdown.classList.remove('active');
+      autocompleteIndex = -1;
+      filteredContacts = [];
+      
+      openChat(contact.did);
+    }
+
+    function setupEventListeners() {
+      p2p.on('message:new', ({ from, message }) => {
+        if (currentChat === from) {
+          displayMessage(message, 'received');
+        }
+        updateConversationList();
+      });
+
+      const messageInput = document.getElementById('messageInput');
+      messageInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          window.sendMessage();
+        }
+      });
+    }
+
+    function loadConversations() {
+      const conversations = p2p.getConversations();
+      const listEl = document.getElementById('conversationList');
+      
+      listEl.innerHTML = '';
+      
+      conversations.forEach(conv => {
+        const el = document.createElement('div');
+        el.className = 'conversation-item';
+        el.onclick = () => openChat(conv.did);
+        
+        const contacts = p2p.getContacts();
+        const contact = contacts.find(c => c.did === conv.did);
+        const displayName = contact?.username || conv.did.substring(0, 20) + '...';
+        
+        const lastMsg = conv.lastMessage?.content?.substring(0, 50) || 'No messages';
+        const time = conv.lastMessage ? 
+          new Date(conv.lastMessage.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+        
+        el.innerHTML = `
+          <div class="conversation-header">
+            <span class="conversation-name">${displayName}</span>
+            <span class="conversation-time">${time}</span>
+          </div>
+          <div class="conversation-preview">
+            ${lastMsg}
+            ${conv.unreadCount > 0 ? `<span class="unread-badge">${conv.unreadCount}</span>` : ''}
+          </div>
+        `;
+        
+        listEl.appendChild(el);
+      });
+    }
+
+    function openChat(did) {
+      currentChat = did;
+      
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('chatArea').style.display = 'flex';
+      
+      const contacts = p2p.getContacts();
+      const contact = contacts.find(c => c.did === did);
+      const displayName = contact?.username || did.substring(0, 30) + '...';
+      
+      document.getElementById('chatName').textContent = displayName;
+      document.getElementById('chatAvatar').textContent = (contact?.username || '?')[0].toUpperCase();
+      
+      p2p.messaging.markAsRead(did);
+      
+      const messages = p2p.getConversation(did);
+      const container = document.getElementById('messagesContainer');
+      container.innerHTML = '';
+      
+      messages.forEach(msg => {
+        displayMessage(msg, msg.from === p2p.identity.did ? 'sent' : 'received');
+      });
+      
+      container.scrollTop = container.scrollHeight;
+      updateConversationList();
+    }
+
+    function displayMessage(message, type) {
+      const container = document.getElementById('messagesContainer');
+      const el = document.createElement('div');
+      el.className = `message message-${type}`;
+      
+      const time = new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      
+      el.innerHTML = `
+        ${message.content}
+        <div class="message-time">${time}</div>
+      `;
+      
+      container.appendChild(el);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    window.sendMessage = async function() {
+      const input = document.getElementById('messageInput');
+      const content = input.value.trim();
+      
+      if (!content || !currentChat) return;
+      
+      try {
+        const message = await p2p.sendMessage(currentChat, content);
+        displayMessage(message, 'sent');
+        input.value = '';
+        updateConversationList();
+      } catch (err) {
+        console.error('Failed to send message:', err);
+        alert('Failed to send message');
+      }
+    };
+
+    function updateConversationList() {
+      loadConversations();
+    }
+
+    function showNotification(title, message) {
+      const notification = document.createElement('div');
+      notification.className = 'notification';
+      notification.innerHTML = `
+        <div class="notification-title">${title}</div>
+        <div class="notification-message">${message}</div>
+      `;
+      
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.remove();
+      }, 5000);
+    }
+
+    // Start the app
+    init();
+  </script>
+</body>
+</html>

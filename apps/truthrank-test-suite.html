@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="srcp:did" content="did:srcp:app/truthrank-test">
+<meta name="srcp:app" content="truthrank-test-suite">
+<title>TruthRank Test Suite</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:#0d1117;color:#c9d1d9;min-height:100vh;padding:16px;line-height:1.6}
+.container{max-width:1400px;margin:0 auto}
+header{background:rgba(22,27,34,.8);border:1px solid #30363d;border-radius:12px;padding:2rem;margin-bottom:2rem;backdrop-filter:blur(10px)}
+h1{font-size:2.5rem;margin-bottom:.5rem;background:linear-gradient(135deg,#58a6ff,#8a4fff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{color:#8b949e;font-size:1.1rem}
+.test-controls{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
+.btn{padding:.7rem 1.4rem;background:linear-gradient(135deg,#58a6ff,#8a4fff);border:none;border-radius:8px;color:#fff;font-weight:600;cursor:pointer;transition:all .2s;margin:.5rem}
+.btn:hover{transform:translateY(-2px);opacity:.92}
+.btn.secondary{background:#30363d;color:#c9d1d9}
+.test-results{display:grid;grid-template-columns:repeat(auto-fit,minmax(450px,1fr));gap:1.5rem}
+.test-card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:1.5rem}
+.test-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.test-title{font-size:1.2rem;color:#58a6ff;font-weight:600}
+.test-status{padding:.3rem .8rem;border-radius:999px;font-size:.85rem;font-weight:600}
+.status-pass{background:rgba(88,166,255,.15);color:#58a6ff;border:1px solid #58a6ff}
+.status-fail{background:rgba(248,81,73,.15);color:#f85149;border:1px solid #f85149}
+.status-running{background:rgba(255,191,71,.15);color:#ffbf47;border:1px solid #ffbf47}
+.test-output{background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:1rem;font-family:'Courier New',monospace;font-size:.85rem;max-height:200px;overflow-y:auto;margin-top:.8rem}
+.test-output.success{border-color:#238636}
+.test-output.error{border-color:#da3633}
+.metric{display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #21262d}
+.metric-label{color:#8b949e}
+.metric-value{color:#58a6ff;font-weight:600}
+.srcp-nav{display:flex;gap:12px;padding:10px 16px;background:#0d1117;border-bottom:1px solid #21262d;position:sticky;top:0;z-index:999;flex-wrap:wrap}
+.srcp-nav a{color:#58a6ff;text-decoration:none;font-weight:600;font-size:13px;padding:6px 12px;border-radius:6px;transition:background .2s}
+.srcp-nav a:hover{background:rgba(88,166,255,.12)}
+.summary{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}
+.summary-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem}
+.summary-stat{text-align:center;padding:1rem}
+.summary-value{font-size:2rem;font-weight:700;margin-bottom:.3rem}
+.summary-value.pass{color:#58a6ff}
+.summary-value.fail{color:#f85149}
+.summary-label{color:#8b949e;font-size:.9rem}
+@media (max-width:768px){.test-results,.summary-stats{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <nav class="srcp-nav">
+  <a href="./srcp-complete-explorer.html">🧭 Explorer</a>
+  <a href="./srcp-dashboard.html">📊 Dashboard</a>
+  <a href="./marketplace.html">🛒 Marketplace</a>
+  <a href="./truthrank.html">🧠 TruthRank</a>
+  <a href="./govchain.html">🏛️ GovChain</a>
+  <a href="./knowledgechain.html">📚 Knowledge</a>
+  <a href="./skillswap.html">💼 SkillSwap</a>
+  <a href="./decentralbank.html">💰 Bank</a>
+  <a href="./messenger.html">💬 Messenger</a>
+  <a href="./uyea.html">🤖 UYEA</a>
+  <a href="./complete-demo.html">🔥 Demo</a>
+  <a href="./truthrank-portal.html">🏠 Portal</a>
+  <a href="./srcp-jsonflow-platform.html">🔥 Json-Flow</a>
+</nav>
+
+<div class="container">
+<header>
+  <h1>🧪 TruthRank Test Suite</h1>
+  <p class="subtitle">Automated Testing for Decentralized Fact-Checking System</p>
+</header>
+
+<div class="test-controls">
+  <button class="btn" onclick="runAllTests()">▶ Run All Tests</button>
+  <button class="btn secondary" onclick="clearResults()">Clear Results</button>
+  <button class="btn secondary" onclick="location.href='truthrank.html'">← Back to TruthRank</button>
+</div>
+
+<div class="summary" id="summary" style="display:none">
+  <h2 style="color:#58a6ff;margin-bottom:1rem">Test Summary</h2>
+  <div class="summary-stats">
+    <div class="summary-stat">
+      <div class="summary-value pass" id="passCount">0</div>
+      <div class="summary-label">Passed</div>
+    </div>
+    <div class="summary-stat">
+      <div class="summary-value fail" id="failCount">0</div>
+      <div class="summary-label">Failed</div>
+    </div>
+    <div class="summary-stat">
+      <div class="summary-value" id="totalCount">0</div>
+      <div class="summary-label">Total Tests</div>
+    </div>
+    <div class="summary-stat">
+      <div class="summary-value" id="duration">0ms</div>
+      <div class="summary-label">Duration</div>
+    </div>
+  </div>
+</div>
+
+<div class="test-results" id="testResults"></div>
+</div>
+
+<script>
+// TruthRank Engine classes (FIXED VERSION)
+class SovereignEngine {
+  constructor(identity) {
+    this.identity = identity || {username: 'test'};
+    this.karma = 100;
+    this.tokens = 500;
+    this.userId = this.identity.username;
+  }
+  
+  static async create(username) {
+    return new SovereignEngine({username});
+  }
+}
+
+const Verdict = {
+  VERIFIED: 'verified',
+  DISPUTED: 'disputed',
+  FALSE: 'false',
+  MISLEADING: 'misleading',
+  UNVERIFIED: 'unverified',
+  SATIRE: 'satire'
+};
+
+const Category = {
+  POLITICS: 'politics',
+  SCIENCE: 'science',
+  HEALTH: 'health',
+  TECHNOLOGY: 'technology',
+  ECONOMICS: 'economics',
+  ENVIRONMENT: 'environment',
+  SOCIAL: 'social',
+  OTHER: 'other'
+};
+
+class TruthRankEngine extends SovereignEngine {
+  constructor(identity) {
+    super(identity);
+    // CRITICAL FIX: Initialize Maps in constructor
+    this.claims = new Map();
+    this.votes = new Map();
+  }
+  
+  get level() {
+    if (this.karma >= 1000) return 5;
+    if (this.karma >= 500) return 4;
+    if (this.karma >= 200) return 3;
+    if (this.karma >= 50) return 2;
+    return 1;
+  }
+  
+  // FIXED: Properly create instance with Maps initialized
+  static async create(username) {
+    const engine = new TruthRankEngine({username});
+    return engine;
+  }
+  
+  async submitClaim({title, text, category, sources = []}) {
+    if (!title || !text) throw new Error('Title and text required');
+    if (this.tokens < 5) throw new Error('Insufficient tokens');
+    
+    const id = 'claim_' + Date.now() + '_' + Math.random();
+    const claim = {
+      id,
+      title,
+      text,
+      category: category || Category.OTHER,
+      sources,
+      submitter: this.userId,
+      timestamp: Date.now(),
+      votes: {
+        verified: 0,
+        false: 0,
+        disputed: 0,
+        misleading: 0,
+        satire: 0
+      },
+      consensus: {
+        verdict: Verdict.UNVERIFIED
+      },
+      truthScore: 0
+    };
+    
+    this.claims.set(id, claim);
+    this.tokens -= 5;
+    return claim;
+  }
+  
+  async voteOnClaim(claimId, {verdict, confidence = 'medium'}) {
+    const claim = this.claims.get(claimId);
+    if (!claim) throw new Error('Claim not found');
+    
+    const voteKey = this.userId + ':' + claimId;
+    if (this.votes.has(voteKey)) throw new Error('Already voted');
+    
+    const confidenceMultiplier = {low: 0.5, medium: 1, high: 1.5};
+    const weight = this.level * (confidenceMultiplier[confidence] || 1);
+    
+    this.votes.set(voteKey, {
+      claimId,
+      voter: this.userId,
+      verdict,
+      weight,
+      timestamp: Date.now()
+    });
+    
+    if (verdict === Verdict.VERIFIED) claim.votes.verified += weight;
+    else if (verdict === Verdict.FALSE) claim.votes.false += weight;
+    else if (verdict === Verdict.DISPUTED) claim.votes.disputed += weight;
+    else if (verdict === Verdict.MISLEADING) claim.votes.misleading += weight;
+    else if (verdict === Verdict.SATIRE) claim.votes.satire += weight;
+    
+    this._updateConsensus(claim);
+    this.karma += 5;
+    return true;
+  }
+  
+  _updateConsensus(claim) {
+    const total = claim.votes.verified + claim.votes.false + claim.votes.disputed + 
+                  claim.votes.misleading + claim.votes.satire;
+    if (total === 0) return;
+    
+    const scores = {
+      verified: claim.votes.verified / total,
+      false: claim.votes.false / total,
+      disputed: claim.votes.disputed / total,
+      misleading: claim.votes.misleading / total,
+      satire: claim.votes.satire / total
+    };
+    
+    const max = Math.max(scores.verified, scores.false, scores.disputed, 
+                        scores.misleading, scores.satire);
+    
+    if (scores.verified === max) claim.consensus.verdict = Verdict.VERIFIED;
+    else if (scores.false === max) claim.consensus.verdict = Verdict.FALSE;
+    else if (scores.misleading === max) claim.consensus.verdict = Verdict.MISLEADING;
+    else if (scores.satire === max) claim.consensus.verdict = Verdict.SATIRE;
+    else claim.consensus.verdict = Verdict.DISPUTED;
+    
+    claim.truthScore = Math.round((scores.verified - scores.false) * 100);
+  }
+  
+  getClaims() {
+    return Array.from(this.claims.values()).sort((a, b) => b.timestamp - a.timestamp);
+  }
+}
+
+// Test framework
+class TestRunner {
+  constructor() {
+    this.tests = [];
+    this.results = [];
+  }
+  
+  addTest(name, fn) {
+    this.tests.push({ name, fn });
+  }
+  
+  async runAll() {
+    this.results = [];
+    const startTime = Date.now();
+    
+    for (const test of this.tests) {
+      const result = await this.runTest(test);
+      this.results.push(result);
+      this.renderTestResult(result);
+    }
+    
+    const duration = Date.now() - startTime;
+    this.showSummary(duration);
+  }
+  
+  async runTest(test) {
+    const result = {
+      name: test.name,
+      status: 'running',
+      output: [],
+      metrics: {},
+      startTime: Date.now()
+    };
+    
+    try {
+      await test.fn(result);
+      result.status = 'pass';
+    } catch (error) {
+      result.status = 'fail';
+      result.output.push(`ERROR: ${error.message}`);
+      console.error(`Test "${test.name}" failed:`, error);
+    }
+    
+    result.duration = Date.now() - result.startTime;
+    return result;
+  }
+  
+  renderTestResult(result) {
+    const container = document.getElementById('testResults');
+    const statusClass = result.status === 'pass' ? 'status-pass' : 'status-fail';
+    const outputClass = result.status === 'pass' ? 'success' : 'error';
+    
+    const metricsHtml = Object.entries(result.metrics).map(([key, value]) => 
+      `<div class="metric"><span class="metric-label">${key}</span><span class="metric-value">${value}</span></div>`
+    ).join('');
+    
+    const card = document.createElement('div');
+    card.className = 'test-card';
+    card.innerHTML = `
+      <div class="test-header">
+        <div class="test-title">${result.name}</div>
+        <div class="test-status ${statusClass}">${result.status.toUpperCase()}</div>
+      </div>
+      ${metricsHtml}
+      <div class="test-output ${outputClass}">
+        ${result.output.map(line => `<div>${line}</div>`).join('')}
+        <div style="margin-top:.5rem;color:#8b949e">Duration: ${result.duration}ms</div>
+      </div>
+    `;
+    container.appendChild(card);
+  }
+  
+  showSummary(duration) {
+    const summary = document.getElementById('summary');
+    summary.style.display = 'block';
+    
+    const passed = this.results.filter(r => r.status === 'pass').length;
+    const failed = this.results.filter(r => r.status === 'fail').length;
+    
+    document.getElementById('passCount').textContent = passed;
+    document.getElementById('failCount').textContent = failed;
+    document.getElementById('totalCount').textContent = this.results.length;
+    document.getElementById('duration').textContent = duration + 'ms';
+  }
+}
+
+const runner = new TestRunner();
+
+// Test 1: Engine Creation
+runner.addTest('Engine Creation', async (result) => {
+  const engine = await TruthRankEngine.create('tester');
+  
+  result.output.push('✓ Engine created successfully');
+  result.output.push(`  User: ${engine.userId}`);
+  result.output.push(`  Initial karma: ${engine.karma}`);
+  result.output.push(`  Initial tokens: ${engine.tokens}`);
+  
+  result.metrics['Initial Karma'] = engine.karma;
+  result.metrics['Initial Tokens'] = engine.tokens;
+  result.metrics['User Level'] = engine.level;
+  
+  if (!engine || engine.karma !== 100 || engine.tokens !== 500) {
+    throw new Error('Engine initialization failed');
+  }
+  
+  // VERIFY Maps are initialized
+  if (!(engine.claims instanceof Map) || !(engine.votes instanceof Map)) {
+    throw new Error('Maps not properly initialized');
+  }
+});
+
+// Test 2: Claim Submission
+runner.addTest('Claim Submission', async (result) => {
+  const engine = await TruthRankEngine.create('submitter');
+  const initialTokens = engine.tokens;
+  
+  const claim = await engine.submitClaim({
+    title: 'Test Claim',
+    text: 'This is a test claim for verification',
+    category: Category.SCIENCE,
+    sources: ['https://example.com']
+  });
+  
+  result.output.push('✓ Claim submitted successfully');
+  result.output.push(`  Claim ID: ${claim.id}`);
+  result.output.push(`  Tokens spent: ${initialTokens - engine.tokens}`);
+  result.output.push(`  Category: ${claim.category}`);
+  
+  result.metrics['Claims Created'] = engine.getClaims().length;
+  result.metrics['Tokens Remaining'] = engine.tokens;
+  result.metrics['Token Cost'] = initialTokens - engine.tokens;
+  
+  if (!claim || claim.consensus.verdict !== Verdict.UNVERIFIED) {
+    throw new Error('Claim submission failed');
+  }
+});
+
+// Test 3: Voting System
+runner.addTest('Voting System', async (result) => {
+  const engine = await TruthRankEngine.create('voter');
+  engine.karma = 600; // Level 4
+  
+  const claim = await engine.submitClaim({
+    title: 'Voting Test',
+    text: 'Testing the voting mechanism',
+    category: Category.TECHNOLOGY
+  });
+  
+  const initialKarma = engine.karma;
+  await engine.voteOnClaim(claim.id, { verdict: Verdict.VERIFIED, confidence: 'high' });
+  
+  result.output.push('✓ Vote cast successfully');
+  result.output.push(`  Verdict: VERIFIED`);
+  result.output.push(`  Karma gained: ${engine.karma - initialKarma}`);
+  result.output.push(`  Vote weight: ${engine.level * 1.5}`);
+  
+  result.metrics['Karma After Vote'] = engine.karma;
+  result.metrics['Vote Weight'] = engine.level * 1.5;
+  result.metrics['Total Votes'] = engine.votes.size;
+  
+  if (engine.karma <= initialKarma) {
+    throw new Error('Voting did not increase karma');
+  }
+});
+
+// Test 4: Consensus Mechanism
+runner.addTest('Consensus Mechanism', async (result) => {
+  const engine1 = await TruthRankEngine.create('user1');
+  const engine2 = await TruthRankEngine.create('user2');
+  const engine3 = await TruthRankEngine.create('user3');
+  
+  engine1.karma = 1000; // Level 5
+  engine2.karma = 1000;
+  engine3.karma = 1000;
+  
+  const claim = await engine1.submitClaim({
+    title: 'Consensus Test',
+    text: 'Testing consensus building',
+    category: Category.HEALTH
+  });
+  
+  // Share claim across engines
+  engine2.claims.set(claim.id, claim);
+  engine3.claims.set(claim.id, claim);
+  
+  await engine1.voteOnClaim(claim.id, { verdict: Verdict.VERIFIED });
+  await engine2.voteOnClaim(claim.id, { verdict: Verdict.VERIFIED });
+  await engine3.voteOnClaim(claim.id, { verdict: Verdict.FALSE });
+  
+  result.output.push('✓ Consensus reached');
+  result.output.push(`  Final verdict: ${claim.consensus.verdict}`);
+  result.output.push(`  Truth score: ${claim.truthScore}`);
+  result.output.push(`  Verified votes: ${claim.votes.verified}`);
+  result.output.push(`  False votes: ${claim.votes.false}`);
+  
+  result.metrics['Final Verdict'] = claim.consensus.verdict;
+  result.metrics['Truth Score'] = claim.truthScore;
+  result.metrics['Total Votes'] = claim.votes.verified + claim.votes.false;
+  
+  if (claim.consensus.verdict !== Verdict.VERIFIED) {
+    throw new Error('Consensus not properly calculated');
+  }
+});
+
+// Test 5: Token Economics
+runner.addTest('Token Economics', async (result) => {
+  const engine = await TruthRankEngine.create('economist');
+  const initialTokens = engine.tokens;
+  
+  let claims = [];
+  for (let i = 0; i < 10; i++) {
+    claims.push(await engine.submitClaim({
+      title: `Claim ${i}`,
+      text: `Test claim number ${i}`,
+      category: Category.ECONOMICS
+    }));
+  }
+  
+  const tokensSpent = initialTokens - engine.tokens;
+  const expectedCost = 5 * claims.length;
+  
+  result.output.push('✓ Token economics tested');
+  result.output.push(`  Claims created: ${claims.length}`);
+  result.output.push(`  Tokens spent: ${tokensSpent}`);
+  result.output.push(`  Expected cost: ${expectedCost}`);
+  result.output.push(`  Remaining tokens: ${engine.tokens}`);
+  
+  result.metrics['Claims Created'] = claims.length;
+  result.metrics['Tokens Spent'] = tokensSpent;
+  result.metrics['Tokens Remaining'] = engine.tokens;
+  
+  if (tokensSpent !== expectedCost) {
+    throw new Error(`Token cost mismatch: expected ${expectedCost}, got ${tokensSpent}`);
+  }
+});
+
+// Test 6: Karma Progression
+runner.addTest('Karma Progression', async (result) => {
+  const engine = await TruthRankEngine.create('karmatest');
+  const initialLevel = engine.level;
+  
+  // Simulate voting to gain karma
+  for (let i = 0; i < 20; i++) {
+    engine.karma += 5;
+  }
+  
+  const newLevel = engine.level;
+  
+  result.output.push('✓ Karma progression tested');
+  result.output.push(`  Initial level: ${initialLevel}`);
+  result.output.push(`  Final level: ${newLevel}`);
+  result.output.push(`  Total karma: ${engine.karma}`);
+  result.output.push(`  Karma gained: ${engine.karma - 100}`);
+  
+  result.metrics['Initial Level'] = initialLevel;
+  result.metrics['Final Level'] = newLevel;
+  result.metrics['Total Karma'] = engine.karma;
+  
+  if (newLevel <= initialLevel) {
+    throw new Error('Karma did not progress to next level');
+  }
+});
+
+// Test 7: Double Voting Prevention
+runner.addTest('Double Voting Prevention', async (result) => {
+  const engine = await TruthRankEngine.create('doublevote');
+  
+  const claim = await engine.submitClaim({
+    title: 'Double Vote Test',
+    text: 'Testing double vote prevention',
+    category: Category.POLITICS
+  });
+  
+  await engine.voteOnClaim(claim.id, { verdict: Verdict.VERIFIED });
+  
+  let errorCaught = false;
+  try {
+    await engine.voteOnClaim(claim.id, { verdict: Verdict.FALSE });
+  } catch (error) {
+    errorCaught = true;
+    result.output.push('✓ Double voting prevented');
+    result.output.push(`  Error: ${error.message}`);
+  }
+  
+  result.metrics['Votes Cast'] = engine.votes.size;
+  result.metrics['Double Vote Blocked'] = errorCaught ? 'Yes' : 'No';
+  
+  if (!errorCaught) {
+    throw new Error('Double voting was not prevented');
+  }
+});
+
+// Test 8: Insufficient Tokens
+runner.addTest('Insufficient Tokens', async (result) => {
+  const engine = await TruthRankEngine.create('poortester');
+  engine.tokens = 3; // Less than 5 required
+  
+  let errorCaught = false;
+  try {
+    await engine.submitClaim({
+      title: 'Should Fail',
+      text: 'This should fail due to insufficient tokens',
+      category: Category.OTHER
+    });
+  } catch (error) {
+    errorCaught = true;
+    result.output.push('✓ Insufficient tokens error caught');
+    result.output.push(`  Error: ${error.message}`);
+    result.output.push(`  Tokens: ${engine.tokens}`);
+  }
+  
+  result.metrics['Tokens Available'] = engine.tokens;
+  result.metrics['Error Caught'] = errorCaught ? 'Yes' : 'No';
+  
+  if (!errorCaught) {
+    throw new Error('Insufficient tokens error was not raised');
+  }
+});
+
+// Global functions
+function runAllTests() {
+  document.getElementById('testResults').innerHTML = '';
+  document.getElementById('summary').style.display = 'none';
+  runner.runAll();
+}
+
+function clearResults() {
+  document.getElementById('testResults').innerHTML = '';
+  document.getElementById('summary').style.display = 'none';
+}
+
+// Auto-run on load
+window.addEventListener('load', () => {
+  console.log('TruthRank Test Suite loaded');
+  console.log('Click "Run All Tests" to begin testing');
+});
+</script>
+</body>
+</html>

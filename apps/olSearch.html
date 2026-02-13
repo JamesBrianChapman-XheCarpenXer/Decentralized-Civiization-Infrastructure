@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="srcp:did" content="did:srcp:app/unified-platform">
+  <title>SRCP • Unified Contract Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1f2937;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --text2: #8b949e;
+      --accent: #58a6ff;
+      --purple: #8a4fff;
+      --green: #3fb950;
+      --mono: 'JetBrains Mono', monospace;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+    .srcp-nav {
+      display: flex;
+      gap: 14px;
+      padding: 12px 20px;
+      background: rgba(13,17,23,0.92);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+      flex-wrap: wrap;
+    }
+    .srcp-nav a {
+      color: #a5d8ff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.92rem;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+    .srcp-nav a:hover { background: rgba(165,216,255,0.12); color: white; }
+    
+    .layout {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      min-height: calc(100vh - 60px);
+    }
+    
+    /* Sidebar */
+    .sidebar {
+      border-right: 1px solid var(--border);
+      padding: 20px;
+      overflow-y: auto;
+      background: var(--surface);
+    }
+    
+    .sidebar h2 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      opacity: 0.7;
+      margin-bottom: 16px;
+      letter-spacing: 0.5px;
+    }
+    
+    .sidebar input, .sidebar textarea {
+      width: 100%;
+      margin-bottom: 10px;
+      background: #0d1117;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.92rem;
+    }
+    
+    .sidebar textarea {
+      min-height: 80px;
+      resize: vertical;
+      font-family: var(--mono);
+    }
+    
+    .sidebar button {
+      width: 100%;
+      margin-bottom: 8px;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--accent), #388bfd);
+      border: none;
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    
+    .sidebar button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(88,166,255,0.3);
+    }
+    
+    .sidebar button.outline {
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+    }
+    
+    .address-item {
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      background: #0d1117;
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+    
+    .address-item:hover {
+      background: #1a1f26;
+      border-color: var(--accent);
+    }
+    
+    .address-item strong {
+      color: var(--accent);
+      font-size: 0.95rem;
+    }
+    
+    .address-path {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--text2);
+      margin-top: 4px;
+    }
+    
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 24px 0;
+    }
+    
+    /* Main Content */
+    .main-content {
+      padding: 24px;
+      overflow-y: auto;
+    }
+    
+    header {
+      text-align: center;
+      padding: 20px 0 40px;
+    }
+    
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--accent), var(--purple), #f472b6);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 10px;
+    }
+    
+    .subtitle {
+      color: var(--text2);
+      font-size: 1.05rem;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    
+    .input-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    
+    .input-section h2 {
+      margin-bottom: 16px;
+      color: var(--accent);
+      font-size: 1.2rem;
+    }
+    
+    .contract-textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 16px;
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: white;
+      font-family: var(--mono);
+      font-size: 0.95rem;
+      resize: vertical;
+      margin: 12px 0;
+    }
+    
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 16px 0;
+    }
+    
+    .btn {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, var(--accent), #388bfd);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(88,166,255,0.35);
+    }
+    
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+    }
+    
+    .btn-deploy {
+      background: linear-gradient(135deg, var(--green), #2f9e44);
+    }
+    
+    .btn-deploy:hover {
+      box-shadow: 0 8px 24px rgba(63,185,80,0.35);
+    }
+    
+    .output-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 20px;
+    }
+    
+    .output-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    
+    .panel-header {
+      background: var(--surface2);
+      padding: 12px 16px;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.92rem;
+    }
+    
+    pre {
+      padding: 16px;
+      background: #0d1117;
+      font-family: var(--mono);
+      font-size: 0.88rem;
+      overflow-x: auto;
+      margin: 0;
+      max-height: 420px;
+      line-height: 1.5;
+    }
+    
+    .status {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin: 16px 0;
+      font-weight: 500;
+      font-size: 0.92rem;
+    }
+    
+    .success {
+      background: rgba(63,185,80,0.15);
+      color: #3fb950;
+      border: 1px solid rgba(63,185,80,0.3);
+    }
+    
+    .error {
+      background: rgba(248,81,73,0.15);
+      color: #f85149;
+      border: 1px solid rgba(248,81,73,0.3);
+    }
+    
+    .viewer {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 24px;
+      min-height: 300px;
+    }
+    
+    .viewer iframe {
+      width: 100%;
+      min-height: 400px;
+      border: none;
+      background: white;
+      border-radius: 8px;
+    }
+    
+    .viewer pre {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    
+    @media (max-width: 1024px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      .output-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="srcp-nav">
+  <a href="./srcp-complete-explorer.html">🧭 Explorer</a>
+  <a href="./srcp-dashboard.html">📊 Dashboard</a>
+  <a href="./marketplace.html">🛒 Marketplace</a>
+  <a href="./truthrank.html">🧠 TruthRank</a>
+  <a href="./govchain.html">🏛️ GovChain</a>
+  <a href="./knowledgechain.html">📚 Knowledge</a>
+  <a href="./skillswap.html">💼 SkillSwap</a>
+  <a href="./decentralbank.html">💰 Bank</a>
+  <a href="./messenger.html">💬 Messenger</a>
+  <a href="./uyea.html">🤖 UYEA</a>
+  <a href="./complete-demo.html">🔥 Demo</a>
+  <a href="./truthrank-portal.html">🏠 Portal</a>
+  <a href="./srcp-jsonflow-platform.html">🔥 Json-Flow</a>
+  <a href="./truthrank-test-suite.html">🏠 Test</a>
+  <a href="./olSearch.html">🏠 Address-Manager</a>
+  <a href="./token-platform.html">🏠 Token</a>
+   <a href="./srcp-jbc.html">🏠 PLATFORM</a>
+</nav>
+
+  <div class="layout">
+    <!-- Sidebar: Address Management & Search -->
+    <aside class="sidebar">
+      <h2>📍 Deploy to Address</h2>
+      <input id="deployAddr" placeholder="address://contracts/mycontract">
+      <input id="deployTitle" placeholder="Contract Title">
+      <input id="deployTags" placeholder="tags (comma separated)">
+      <button onclick="deployCurrentContract()">📤 Deploy Contract</button>
+      
+      <div class="divider"></div>
+      
+      <h2>🔍 Search Addresses</h2>
+      <input id="search" placeholder="search contracts..." oninput="searchAddresses()">
+      
+      <div id="results" style="margin-top: 16px;"></div>
+    </aside>
+
+    <!-- Main Content: Contract Builder -->
+    <main class="main-content">
+      <header>
+        <h1>SRCP Unified Platform</h1>
+        <p class="subtitle">Build smart contracts in natural language → Deploy to addresses → Execute anywhere</p>
+      </header>
+
+      <div class="input-section">
+        <h2>✨ Describe Your Smart Contract</h2>
+        <textarea id="nlInput" class="contract-textarea" placeholder="Example: Create a simple token transfer function that checks balance, subtracts from sender, adds to receiver, and logs the transfer. Require amount > 0."></textarea>
+        <div class="controls">
+          <input type="text" id="contractName" placeholder="Contract name (e.g. TokenTransfer)" style="flex:1;max-width:320px;padding:12px;border:1px solid var(--border);border-radius:10px;background:#0d1117;color:white;">
+          <button class="btn" onclick="buildContract()">🔨 Build Contract</button>
+          <button class="btn btn-outline" onclick="clearAll()">🗑️ Clear</button>
+        </div>
+      </div>
+
+      <div id="status" class="status" style="display:none;"></div>
+
+      <div class="output-grid">
+        <div class="output-panel">
+          <div class="panel-header">JSONFlow (Pivot IR)</div>
+          <pre id="jsonflowOutput">— waiting for input —</pre>
+        </div>
+        <div class="output-panel">
+          <div class="panel-header">Compiled JavaScript</div>
+          <pre id="jsOutput">— not compiled yet —</pre>
+        </div>
+        <div class="output-panel">
+          <div class="panel-header">Compiled Solidity</div>
+          <pre id="solidityOutput">— not compiled yet —</pre>
+        </div>
+        <div class="output-panel">
+          <div class="panel-header">Execution Status</div>
+          <pre id="execOutput">— not executed yet —</pre>
+        </div>
+      </div>
+
+      <div id="viewer" class="viewer" style="display:none;">
+        <div id="viewerContent"></div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    /* =========================================================================
+       IndexedDB Storage for Address Registry
+       ========================================================================= */
+    const DB_NAME = 'address_registry';
+    const STORE = 'addresses';
+    let db;
+
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = e => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(STORE)) {
+            db.createObjectStore(STORE, { keyPath: 'address' });
+          }
+        };
+        req.onsuccess = () => {
+          db = req.result;
+          resolve();
+        };
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function putAddress(record) {
+      return new Promise(resolve => {
+        const tx = db.transaction(STORE, 'readwrite');
+        tx.objectStore(STORE).put(record);
+        tx.oncomplete = resolve;
+      });
+    }
+
+    function getAllAddresses() {
+      return new Promise(resolve => {
+        const tx = db.transaction(STORE, 'readonly');
+        const req = tx.objectStore(STORE).getAll();
+        req.onsuccess = () => resolve(req.result || []);
+      });
+    }
+
+    /* =========================================================================
+       Contract Building Logic
+       ========================================================================= */
+    let currentJSONFlow = null;
+    let currentContractName = '';
+    let currentJS = '';
+    let currentSolidity = '';
+
+    function showStatus(msg, type = 'success') {
+      const el = document.getElementById('status');
+      el.textContent = msg;
+      el.className = 'status ' + type;
+      el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 5000);
+    }
+
+    function clearAll() {
+      document.getElementById('nlInput').value = '';
+      document.getElementById('contractName').value = '';
+      document.getElementById('jsonflowOutput').textContent = '— cleared —';
+      document.getElementById('jsOutput').textContent = '— cleared —';
+      document.getElementById('solidityOutput').textContent = '— cleared —';
+      document.getElementById('execOutput').textContent = '— cleared —';
+      currentJSONFlow = null;
+      currentContractName = '';
+      currentJS = '';
+      currentSolidity = '';
+    }
+
+    function mockNaturalToJSONFlow(text) {
+      const lower = text.toLowerCase().trim();
+      let steps = [];
+
+      if (lower.includes('transfer') && lower.includes('token')) {
+        steps = [
+          { assert: { condition: { compare: { left: { get: ['balances', 'from'] }, op: '>=', right: { get: 'amount' } } }, message: 'Insufficient balance' } },
+          { let: { newFrom: { expr: { sub: [{ get: ['balances', 'from'] }, { get: 'amount' }] } }, newTo: { expr: { add: [{ get: ['balances', 'to'] }, { get: 'amount' }] } } } },
+          { set: { target: ['balances', 'from'], value: { get: 'newFrom' } } },
+          { set: { target: ['balances', 'to'], value: { get: 'newTo' } } },
+          { log: { level: 'info', message: ['Transferred', { get: 'amount' }, 'from', { get: 'from' }, 'to', { get: 'to' }] } },
+          { return: { success: true, newBalances: { get: 'balances' } } }
+        ];
+      } else if (lower.includes('governance') || lower.includes('proposal')) {
+        steps = [
+          { let: { totalVotes: { expr: { add: [{ get: 'votesFor' }, { get: 'votesAgainst' }] } } } },
+          { if: { condition: { compare: { left: 'totalVotes', op: '>', right: 0 } }, then: [
+            { let: { pass: { expr: { div: [{ expr: { mul: [{ get: 'votesFor' }, 100] } }, { get: 'totalVotes' }] } } } }
+          ] } },
+          { if: { condition: { compare: { left: 'pass', op: '>=', right: 50 } }, then: [
+            { set: { target: 'status', value: 'approved' } },
+            { log: { level: 'info', message: ['Proposal approved with', { get: 'pass' }, 'percent'] } }
+          ], else: [
+            { set: { target: 'status', value: 'rejected' } },
+            { log: { level: 'info', message: ['Proposal rejected'] } }
+          ] } },
+          { return: { get: 'status' } }
+        ];
+      } else {
+        steps = [
+          { log: { level: 'info', message: [text] } },
+          { return: { success: true, message: 'Contract executed' } }
+        ];
+      }
+
+      return {
+        function: 'generated_contract',
+        description: text,
+        steps: steps
+      };
+    }
+
+    function mockCompileToJS(jsonFlow) {
+      let code = `// Generated from JSONFlow\n// ${jsonFlow.description || ''}\n\n`;
+      code += `function ${currentContractName || 'contract'}(params) {\n`;
+      jsonFlow.steps?.forEach(s => {
+        if (s.assert) code += `  if (!(${mockExpr(s.assert.condition)})) throw new Error("${s.assert.message}");\n`;
+        if (s.let) code += Object.entries(s.let).map(([k, v]) => `  let ${k} = ${mockValue(v)};\n`).join('');
+        if (s.set) code += `  ${s.set.target.join?.('.') || s.set.target} = ${mockValue(s.set.value)};\n`;
+        if (s.log) code += `  console.log(${mockValue(s.log.message)});\n`;
+        if (s.return) code += `  return ${mockValue(s.return)};\n`;
+      });
+      code += `}\n`;
+      return code;
+    }
+
+    function mockCompileToSolidity(jsonFlow) {
+      let code = `// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\n`;
+      code += `// ${jsonFlow.description || ''}\n`;
+      code += `contract ${currentContractName || 'Generated'} {\n`;
+      code += `  event Log(string message);\n\n`;
+      code += `  function execute() public {\n`;
+      jsonFlow.steps?.forEach(s => {
+        if (s.assert) code += `    require(${mockExpr(s.assert.condition)}, "${s.assert.message}");\n`;
+        if (s.log) code += `    emit Log("${s.log.message}");\n`;
+      });
+      code += `  }\n`;
+      code += `}\n`;
+      return code;
+    }
+
+    function mockExpr(expr) {
+      if (expr?.compare) return `${mockValue(expr.compare.left)} ${expr.compare.op} ${mockValue(expr.compare.right)}`;
+      return 'true';
+    }
+
+    function mockValue(v) {
+      if (typeof v === 'object') {
+        if (v.get) return v.get.join?.('.') || v.get;
+        if (v.expr?.add) return v.expr.add.map(mockValue).join(' + ');
+        if (v.expr?.sub) return v.expr.sub.map(mockValue).join(' - ');
+        if (v.expr?.mul) return v.expr.mul.map(mockValue).join(' * ');
+        if (v.expr?.div) return v.expr.div.map(mockValue).join(' / ');
+        return JSON.stringify(v);
+      }
+      return JSON.stringify(v);
+    }
+
+    function buildContract() {
+      const text = document.getElementById('nlInput').value.trim();
+      const name = document.getElementById('contractName').value.trim() || 'GeneratedContract';
+      if (!text) return showStatus('Please enter a contract description', 'error');
+
+      try {
+        currentJSONFlow = mockNaturalToJSONFlow(text);
+        currentContractName = name;
+        currentJS = mockCompileToJS(currentJSONFlow);
+        currentSolidity = mockCompileToSolidity(currentJSONFlow);
+
+        document.getElementById('jsonflowOutput').textContent = JSON.stringify(currentJSONFlow, null, 2);
+        document.getElementById('jsOutput').textContent = currentJS;
+        document.getElementById('solidityOutput').textContent = currentSolidity;
+        document.getElementById('execOutput').textContent = '✅ Contract compiled successfully!\n\nReady to deploy to an address.';
+
+        showStatus(`Contract "${name}" built successfully!`);
+      } catch (e) {
+        showStatus('Error: ' + e.message, 'error');
+      }
+    }
+
+    /* =========================================================================
+       Address Deployment
+       ========================================================================= */
+    async function deployCurrentContract() {
+      const address = document.getElementById('deployAddr').value.trim();
+      const title = document.getElementById('deployTitle').value.trim();
+      const tags = document.getElementById('deployTags').value.trim();
+
+      if (!address) return showStatus('Please enter an address', 'error');
+      if (!currentJSONFlow) return showStatus('Please build a contract first', 'error');
+
+      const record = {
+        address: address,
+        title: title || currentContractName || 'Untitled Contract',
+        content: JSON.stringify({
+          jsonflow: currentJSONFlow,
+          javascript: currentJS,
+          solidity: currentSolidity,
+          name: currentContractName
+        }, null, 2),
+        tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+        created: Date.now(),
+        type: 'contract'
+      };
+
+      try {
+        await putAddress(record);
+        document.getElementById('deployAddr').value = '';
+        document.getElementById('deployTitle').value = '';
+        document.getElementById('deployTags').value = '';
+        searchAddresses();
+        showStatus(`✅ Contract deployed to ${address}!`);
+      } catch (e) {
+        showStatus('Deployment failed: ' + e.message, 'error');
+      }
+    }
+
+    /* =========================================================================
+       Address Search & Display
+       ========================================================================= */
+    async function searchAddresses() {
+      const q = document.getElementById('search').value.toLowerCase();
+      const all = await getAllAddresses();
+
+      const matches = all.filter(a =>
+        !q ||
+        a.address.toLowerCase().includes(q) ||
+        a.title.toLowerCase().includes(q) ||
+        a.tags.join(' ').toLowerCase().includes(q)
+      );
+
+      renderResults(matches);
+    }
+
+    function renderResults(list) {
+      const results = document.getElementById('results');
+      results.innerHTML = '';
+      
+      if (list.length === 0) {
+        results.innerHTML = '<div style="color:var(--text2);font-size:0.9rem;padding:10px;">No contracts found</div>';
+        return;
+      }
+
+      list.forEach(a => {
+        const div = document.createElement('div');
+        div.className = 'address-item';
+        div.innerHTML = `
+          <div><strong>${a.title || '(untitled)'}</strong></div>
+          <div class="address-path">${a.address}</div>
+        `;
+        div.onclick = () => renderAddress(a);
+        results.appendChild(div);
+      });
+    }
+
+    function renderAddress(record) {
+      const viewer = document.getElementById('viewer');
+      const viewerContent = document.getElementById('viewerContent');
+      viewer.style.display = 'block';
+      viewerContent.innerHTML = '';
+
+      try {
+        const data = JSON.parse(record.content);
+        
+        const header = document.createElement('div');
+        header.innerHTML = `<h2 style="color:var(--accent);margin-bottom:20px;">📦 ${record.title}</h2>`;
+        viewerContent.appendChild(header);
+
+        if (data.jsonflow) {
+          const section = document.createElement('div');
+          section.style.marginBottom = '20px';
+          section.innerHTML = `
+            <h3 style="color:var(--green);margin-bottom:10px;">JSONFlow</h3>
+            <pre>${JSON.stringify(data.jsonflow, null, 2)}</pre>
+          `;
+          viewerContent.appendChild(section);
+        }
+
+        if (data.javascript) {
+          const section = document.createElement('div');
+          section.style.marginBottom = '20px';
+          section.innerHTML = `
+            <h3 style="color:var(--accent);margin-bottom:10px;">JavaScript</h3>
+            <pre>${data.javascript}</pre>
+          `;
+          viewerContent.appendChild(section);
+        }
+
+        if (data.solidity) {
+          const section = document.createElement('div');
+          section.style.marginBottom = '20px';
+          section.innerHTML = `
+            <h3 style="color:var(--purple);margin-bottom:10px;">Solidity</h3>
+            <pre>${data.solidity}</pre>
+          `;
+          viewerContent.appendChild(section);
+        }
+      } catch (e) {
+        const pre = document.createElement('pre');
+        pre.textContent = record.content;
+        viewerContent.appendChild(pre);
+      }
+    }
+
+    /* =========================================================================
+       Initialization
+       ========================================================================= */
+    openDB().then(() => {
+      searchAddresses();
+      console.log('✅ Address registry initialized');
+    });
+  </script>
+</body>
+</html>

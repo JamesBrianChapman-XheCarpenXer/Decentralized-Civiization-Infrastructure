@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="srcp:did" content="did:srcp:app/dashboard">
+  <meta name="srcp:app" content="srcp-dashboard">
+  <title>SRCP Dashboard - Sovereign Reputation Protocol</title>
+  <style>
+    :root{--bg-dark:#0a0e1a;--bg-card:#141829;--bg-hover:#1a1f35;--border:#2d3748;--border-accent:#4fd1c5;--text-primary:#e2e8f0;--text-secondary:#a0aec0;--text-dim:#718096;--cyan:#4fd1c5;--pink:#ff6b9d;--yellow:#ffc107;--green:#10b981;--red:#ef4444;--purple:#8b5cf6;--blue:#3b82f6;--glow:0 0 20px rgba(79,209,197,.3)}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg-dark);color:var(--text-primary);line-height:1.6}
+    body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at 20% 50%,rgba(79,209,197,.1) 0%,transparent 50%),radial-gradient(circle at 80% 50%,rgba(255,107,157,.1) 0%,transparent 50%);animation:bgPulse 10s ease-in-out infinite;pointer-events:none;z-index:-1}
+    @keyframes bgPulse{0%,100%{opacity:.5}50%{opacity:.8}}
+    .header{background:rgba(20,24,41,.8);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:1.5rem 2rem;position:sticky;top:0;z-index:100}
+    .header-content{max-width:1600px;margin:0 auto;display:flex;justify-content:space-between;align-items:center}
+    .logo{font-size:1.75rem;font-weight:700;background:linear-gradient(135deg,var(--cyan),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-1px}
+    .header-actions{display:flex;gap:1rem;align-items:center}
+    .status-indicator{display:flex;align-items:center;gap:.5rem;padding:.5rem 1rem;background:var(--bg-card);border:1px solid var(--border);border-radius:20px;font-size:.875rem}
+    .status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 10px var(--green)}50%{opacity:.5}}
+    .container{max-width:1600px;margin:0 auto;padding:2rem}
+    .nav-tabs{display:flex;gap:.5rem;margin-bottom:2rem;border-bottom:2px solid var(--border);overflow-x:auto}
+    .nav-tab{background:none;border:none;color:var(--text-secondary);font-size:.95rem;font-weight:600;padding:1rem 1.5rem;cursor:pointer;position:relative;transition:all .3s;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+    .nav-tab:hover{color:var(--cyan)}
+    .nav-tab.active{color:var(--cyan)}
+    .nav-tab.active::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),var(--pink))}
+    .panel{display:none;animation:fadeIn .5s}
+    .panel.active{display:block}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:1.5rem;margin-bottom:1.5rem}
+    .grid-2{grid-template-columns:repeat(auto-fit,minmax(500px,1fr))}
+    .card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;transition:all .3s;position:relative;overflow:hidden}
+    .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--cyan),var(--pink));transform:scaleX(0);transition:transform .3s}
+    .card:hover{border-color:var(--cyan);box-shadow:var(--glow);transform:translateY(-2px)}
+    .card:hover::before{transform:scaleX(1)}
+    .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
+    .card-title{font-size:1.25rem;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:.5rem}
+    .card-icon{font-size:1.5rem}
+    .card-badge{padding:.25rem .75rem;background:rgba(79,209,197,.1);border:1px solid var(--cyan);border-radius:12px;color:var(--cyan);font-size:.75rem;font-weight:600}
+    .stat-value{font-size:2.5rem;font-weight:700;background:linear-gradient(135deg,var(--cyan),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}
+    .stat-label{font-size:.875rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px}
+    .stat-change{font-size:.875rem;margin-top:.5rem;display:flex;align-items:center;gap:.25rem}
+    .stat-change.positive{color:var(--green)}
+    .stat-change.negative{color:var(--red)}
+    .progress-bar{width:100%;height:8px;background:var(--bg-dark);border-radius:4px;overflow:hidden;margin-top:1rem}
+    .progress-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--pink));transition:width .5s ease;border-radius:4px}
+    .identity-box{background:var(--bg-dark);border:1px solid var(--border);border-radius:8px;padding:1rem;font-family:'Courier New',monospace;font-size:.875rem;color:var(--cyan);word-break:break-all;margin-bottom:1rem}
+    .btn{background:linear-gradient(135deg,var(--cyan),var(--pink));color:#fff;border:none;padding:.75rem 1.5rem;border-radius:8px;font-weight:600;cursor:pointer;transition:all .3s;text-transform:uppercase;letter-spacing:.5px;font-size:.875rem}
+    .btn:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(79,209,197,.4)}
+    .btn-secondary{background:var(--bg-dark);border:1px solid var(--border);color:var(--text-primary)}
+    .btn-secondary:hover{border-color:var(--cyan);box-shadow:var(--glow)}
+    .transaction-list{display:flex;flex-direction:column;gap:.75rem}
+    .transaction-item{display:flex;justify-content:space-between;align-items:center;padding:1rem;background:var(--bg-dark);border:1px solid var(--border);border-radius:8px;transition:all .3s}
+    .transaction-item:hover{border-color:var(--cyan)}
+    .transaction-info{display:flex;align-items:center;gap:1rem}
+    .transaction-icon{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.25rem}
+    .transaction-icon.send{background:rgba(239,68,68,.1);color:var(--red)}
+    .transaction-icon.receive{background:rgba(16,185,129,.1);color:var(--green)}
+    .transaction-details{display:flex;flex-direction:column}
+    .transaction-type{font-weight:600;color:var(--text-primary)}
+    .transaction-time{font-size:.75rem;color:var(--text-dim)}
+    .transaction-amount{font-weight:700;font-size:1.1rem}
+    .transaction-amount.positive{color:var(--green)}
+    .transaction-amount.negative{color:var(--red)}
+    .app-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1.5rem}
+    .app-card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;text-align:center;transition:all .3s;cursor:pointer;text-decoration:none;color:var(--text-primary)}
+    .app-card:hover{border-color:var(--cyan);box-shadow:var(--glow);transform:translateY(-5px)}
+    .app-icon-large{font-size:3rem;margin-bottom:1rem}
+    .app-title{font-size:1.25rem;font-weight:700;margin-bottom:.5rem}
+    .app-description{font-size:.875rem;color:var(--text-secondary);line-height:1.5}
+    .chart-container{height:200px;background:var(--bg-dark);border-radius:8px;padding:1rem;display:flex;align-items:flex-end;justify-content:space-around;gap:.5rem}
+    .chart-bar{flex:1;background:linear-gradient(180deg,var(--cyan),var(--pink));border-radius:4px 4px 0 0;transition:all .3s;position:relative}
+    .chart-bar:hover{opacity:.8}
+    .activity-feed{display:flex;flex-direction:column;gap:1rem}
+    .activity-item{display:flex;gap:1rem;padding:1rem;background:var(--bg-dark);border:1px solid var(--border);border-radius:8px}
+    .activity-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--pink));display:flex;align-items:center;justify-content:center;font-weight:700}
+    .activity-content{flex:1}
+    .activity-text{color:var(--text-primary);margin-bottom:.25rem}
+    .activity-time{font-size:.75rem;color:var(--text-dim)}
+    .loading{display:inline-block;width:20px;height:20px;border:3px solid var(--border);border-top-color:var(--cyan);border-radius:50%;animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .toast{position:fixed;bottom:2rem;right:2rem;background:var(--bg-card);border:1px solid var(--cyan);border-radius:8px;padding:1rem 1.5rem;box-shadow:var(--glow);z-index:1000;animation:slideUp .3s}
+    @keyframes slideUp{from{transform:translateY(100px);opacity:0}to{transform:translateY(0);opacity:1}}
+    .empty-state{text-align:center;padding:3rem;color:var(--text-secondary)}
+    .empty-icon{font-size:4rem;margin-bottom:1rem;opacity:.5}
+    .srcp-nav{display:flex;gap:12px;padding:10px;background:#0f1522;border-bottom:1px solid #1e2740;position:sticky;top:0;z-index:999;flex-wrap:wrap}
+    .srcp-nav a{color:#9bdcff;text-decoration:none;font-weight:600;font-size:13px;padding:4px 8px;border-radius:4px;transition:background .2s}
+    .srcp-nav a:hover{background:rgba(155,220,255,.1)}
+    @media (max-width:768px){.container{padding:1rem}.header-content{flex-direction:column;gap:1rem}.grid,.grid-2,.app-grid{grid-template-columns:1fr}.nav-tabs{overflow-x:scroll}}
+  </style>
+
+
+</head>
+<body>
+
+
+
+<header class="header">
+  <div class="header-content">
+    <div>
+      <div class="logo">🌐 SRCP Dashboard</div>
+      <div style="font-size:.875rem;color:var(--text-secondary);margin-top:.25rem">Sovereign Reputation & Canonical Protocol v6.0</div>
+    </div>
+    <div class="header-actions">
+      <div class="status-indicator">
+        <div class="status-dot"></div>
+        <span>Network Online</span>
+      </div>
+      <button class="btn btn-secondary" id="initBtn">Initialize Identity</button>
+    </div>
+  </div>
+</header>
+
+
+
+  <div id="overview" class="panel active">
+    <div class="grid">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="card-icon">⚡</span>Karma Score</div>
+          <div class="card-badge">LIVE</div>
+        </div>
+        <div class="stat-value" id="karmaScore">850</div>
+        <div class="stat-label">Reputation Points</div>
+        <div class="stat-change positive">↑ +45 this week</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:85%"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="card-icon">💰</span>Token Balance</div>
+        </div>
+        <div class="stat-value" id="tokenBalance">12,450</div>
+        <div class="stat-label">SRCP Tokens</div>
+        <div class="stat-change positive">↑ +2.5% today</div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="card-icon">🔗</span>Network Activity</div>
+        </div>
+        <div class="stat-value">47</div>
+        <div class="stat-label">Transactions This Month</div>
+        <div class="stat-change positive">↑ Active</div>
+      </div>
+    </div>
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="card-icon">📊</span>Karma Trend</div>
+        </div>
+        <div class="chart-container">
+          <div class="chart-bar" style="height:60%"></div>
+          <div class="chart-bar" style="height:75%"></div>
+          <div class="chart-bar" style="height:55%"></div>
+          <div class="chart-bar" style="height:85%"></div>
+          <div class="chart-bar" style="height:70%"></div>
+          <div class="chart-bar" style="height:90%"></div>
+          <div class="chart-bar" style="height:85%"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="card-icon">🔔</span>Recent Activity</div>
+        </div>
+        <div class="activity-feed">
+          <div class="activity-item">
+            <div class="activity-avatar">A</div>
+            <div class="activity-content">
+              <div class="activity-text">Completed task in <strong>SkillSwap</strong></div>
+              <div class="activity-time">2 hours ago</div>
+            </div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-avatar">B</div>
+            <div class="activity-content">
+              <div class="activity-text">Received <strong>50 SRCP</strong> tokens</div>
+              <div class="activity-time">5 hours ago</div>
+            </div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-avatar">C</div>
+            <div class="activity-content">
+              <div class="activity-text">Karma increased by <strong>+15</strong></div>
+              <div class="activity-time">1 day ago</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="identity" class="panel">
+    <div class="grid">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="card-icon">🔐</span>Decentralized Identity</div>
+          <div class="card-badge">DID</div>
+        </div>
+        <div class="stat-label" style="margin-bottom:.5rem">Your DID</div>
+        <div class="identity-box" id="didDisplay">did:srcp:identity:abc123def456...</div>
+        <button class="btn" style="width:100%">Copy DID</button>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="card-icon">👤</span>Profile Information</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:1rem">
+          <div><div class="stat-label">Username</div><div style="font-size:1.25rem;font-weight:600;margin-top:.25rem">sovereign_user</div></div>
+          <div><div class="stat-label">Member Since</div><div style="font-size:1rem;margin-top:.25rem">January 2026</div></div>
+          <div><div class="stat-label">Identity Status</div><div style="color:var(--green);margin-top:.25rem;font-weight:600">✓ Verified</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="card-icon">🔑</span>Key Management</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.75rem">
+          <button class="btn btn-secondary" style="width:100%">Export Keys</button>
+          <button class="btn btn-secondary" style="width:100%">Rotate Keys</button>
+          <button class="btn btn-secondary" style="width:100%">Backup Mnemonic</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="karma" class="panel">
+    <div class="grid">
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="card-icon">⭐</span>Current Karma</div></div>
+        <div class="stat-value">850</div>
+        <div class="stat-label">Total Reputation Points</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:85%"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:.5rem;font-size:.75rem;color:var(--text-dim)">
+          <span>Rank: Advanced</span><span>Next: 1000 pts</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="card-icon">📈</span>Karma Breakdown</div></div>
+        <div style="display:flex;flex-direction:column;gap:1rem">
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:.5rem"><span class="stat-label">Task Completion</span><span style="color:var(--cyan);font-weight:600">450</span></div><div class="progress-bar"><div class="progress-fill" style="width:75%"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:.5rem"><span class="stat-label">Peer Endorsements</span><span style="color:var(--green);font-weight:600">250</span></div><div class="progress-bar"><div class="progress-fill" style="width:50%"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;margin-bottom:.5rem"><span class="stat-label">Community Contributions</span><span style="color:var(--pink);font-weight:600">150</span></div><div class="progress-bar"><div class="progress-fill" style="width:30%"></div></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="card-icon">🏆</span>Achievements</div></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem">
+          <div style="text-align:center"><div style="font-size:2rem">🥇</div><div style="font-size:.75rem;color:var(--text-secondary);margin-top:.25rem">Early Adopter</div></div>
+          <div style="text-align:center"><div style="font-size:2rem">💎</div><div style="font-size:.75rem;color:var(--text-secondary);margin-top:.25rem">100 Tasks</div></div>
+          <div style="text-align:center"><div style="font-size:2rem">⚡</div><div style="font-size:.75rem;color:var(--text-secondary);margin-top:.25rem">Power User</div></div>
+          <div style="text-align:center"><div style="font-size:2rem">🌟</div><div style="font-size:.75rem;color:var(--text-secondary);margin-top:.25rem">Top Rated</div></div>
+          <div style="text-align:center"><div style="font-size:2rem">🔥</div><div style="font-size:.75rem;color:var(--text-secondary);margin-top:.25rem">7 Day Streak</div></div>
+          <div style="text-align:center"><div style="font-size:2rem">🎯</div><div style="font-size:.75rem;color:var(--text-secondary);margin-top:.25rem">Perfect Score</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tokens" class="panel">
+    <div class="grid">
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="card-icon">💎</span>SRCP Balance</div></div>
+        <div class="stat-value">12,450</div>
+        <div class="stat-label">SRCP Tokens</div>
+        <div style="display:flex;gap:.5rem;margin-top:1rem">
+          <button class="btn" style="flex:1">Send</button>
+          <button class="btn btn-secondary" style="flex:1">Receive</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="card-icon">📊</span>Token Stats</div></div>
+        <div style="display:flex;flex-direction:column;gap:1rem">
+          <div style="display:flex;justify-content:space-between"><span class="stat-label">Total Earned</span><span style="font-weight:600">15,200</span></div>
+          <div style="display:flex;justify-content:space-between"><span class="stat-label">Total Spent</span><span style="font-weight:600">2,750</span></div>
+          <div style="display:flex;justify-content:space-between"><span class="stat-label">Staked</span><span style="font-weight:600;color:var(--green)">5,000</span></div>
+          <div style="display:flex;justify-content:space-between"><span class="stat-label">Rewards Earned</span><span style="font-weight:600;color:var(--cyan)">750</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="card-icon">🔒</span>Staking</div></div>
+        <div style="margin-bottom:1rem">
+          <div class="stat-label">Currently Staked</div>
+          <div style="font-size:1.75rem;font-weight:700;margin-top:.5rem;color:var(--green)">5,000 SRCP</div>
+          <div style="font-size:.875rem;color:var(--text-secondary);margin-top:.25rem">APY: 12.5%</div>
+        </div>
+        <button class="btn" style="width:100%">Manage Staking</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="transactions" class="panel">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="card-icon">📜</span>Transaction History</div>
+        <button class="btn btn-secondary">Export</button>
+      </div>
+      <div class="transaction-list">
+        <div class="transaction-item">
+          <div class="transaction-info">
+            <div class="transaction-icon receive">↓</div>
+            <div class="transaction-details">
+              <div class="transaction-type">Received Payment</div>
+              <div class="transaction-time">Feb 7, 2026 - 10:30 AM</div>
+            </div>
+          </div>
+          <div class="transaction-amount positive">+500 SRCP</div>
+        </div>
+        <div class="transaction-item">
+          <div class="transaction-info">
+            <div class="transaction-icon send">↑</div>
+            <div class="transaction-details">
+              <div class="transaction-type">Sent to SkillSwap</div>
+              <div class="transaction-time">Feb 6, 2026 - 3:15 PM</div>
+            </div>
+          </div>
+          <div class="transaction-amount negative">-200 SRCP</div>
+        </div>
+        <div class="transaction-item">
+          <div class="transaction-info">
+            <div class="transaction-icon receive">↓</div>
+            <div class="transaction-details">
+              <div class="transaction-type">Staking Reward</div>
+              <div class="transaction-time">Feb 5, 2026 - 12:00 PM</div>
+            </div>
+          </div>
+          <div class="transaction-amount positive">+50 SRCP</div>
+        </div>
+        <div class="transaction-item">
+          <div class="transaction-info">
+            <div class="transaction-icon receive">↓</div>
+            <div class="transaction-details">
+              <div class="transaction-type">Task Completion</div>
+              <div class="transaction-time">Feb 4, 2026 - 9:45 AM</div>
+            </div>
+          </div>
+          <div class="transaction-amount positive">+150 SRCP</div>
+        </div>
+        <div class="transaction-item">
+          <div class="transaction-info">
+            <div class="transaction-icon send">↑</div>
+            <div class="transaction-details">
+              <div class="transaction-type">Sent to DecentralBank</div>
+              <div class="transaction-time">Feb 3, 2026 - 2:20 PM</div>
+            </div>
+          </div>
+          <div class="transaction-amount negative">-1,000 SRCP</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="applications" class="panel">
+    <div class="card" style="margin-bottom:1.5rem">
+      <div class="card-header">
+        <div class="card-title"><span class="card-icon">🚀</span>SRCP Ecosystem</div>
+        <div class="card-badge">7 APPS</div>
+      </div>
+      <p style="color:var(--text-secondary)">Access all SRCP applications from your dashboard. Your reputation and tokens work seamlessly across the entire ecosystem.</p>
+    </div>
+    <div class="app-grid">
+      <a href="#" onclick="navigateToDID('did:srcp:app/decentralbank');return false" class="app-card">
+        <div class="app-icon-large">💰</div>
+        <div class="app-title">DecentralBank</div>
+        <div class="app-description">P2P lending with reputation-based credit scoring</div>
+      </a>
+      <a href="#" onclick="navigateToDID('did:srcp:app/marketplace');return false" class="app-card">
+        <div class="app-icon-large">🛒</div>
+        <div class="app-title">MarketPlace</div>
+        <div class="app-description">Decentralized commerce with escrow protection</div>
+      </a>
+      <a href="#" onclick="navigateToDID('did:srcp:app/skillswap');return false" class="app-card">
+        <div class="app-icon-large">💼</div>
+        <div class="app-title">SkillSwap</div>
+        <div class="app-description">Meritocratic freelance marketplace</div>
+      </a>
+      <a href="#" onclick="navigateToDID('did:srcp:app/govchain');return false" class="app-card">
+        <div class="app-icon-large">🏛️</div>
+        <div class="app-title">GovChain</div>
+        <div class="app-description">Decentralized governance and voting</div>
+      </a>
+      <a href="#" onclick="navigateToDID('did:srcp:app/knowledgechain');return false" class="app-card">
+        <div class="app-icon-large">📚</div>
+        <div class="app-title">KnowledgeChain</div>
+        <div class="app-description">Incentivized knowledge sharing platform</div>
+      </a>
+      <a href="#" onclick="navigateToDID('did:srcp:app/truthrank');return false" class="app-card">
+        <div class="app-icon-large">🎯</div>
+        <div class="app-title">TruthRank</div>
+        <div class="app-description">Decentralized fact-checking system</div>
+      </a>
+      <a href="#" onclick="navigateToDID('did:srcp:app/explorer');return false" class="app-card">
+        <div class="app-icon-large">🌐</div>
+        <div class="app-title">Suite Explorer</div>
+        <div class="app-description">Explore the complete SRCP ecosystem</div>
+      </a>
+    </div>
+  </div>
+
+  <div id="federation" class="panel">
+    <div class="grid">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="card-icon">🌍</span>Network Status</div>
+          <div class="card-badge">ONLINE</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:1rem">
+          <div style="display:flex;justify-content:space-between"><span class="stat-label">Connected Peers</span><span style="font-weight:600;color:var(--green)">47</span></div>
+          <div style="display:flex;justify-content:space-between"><span class="stat-label">Sync Status</span><span style="font-weight:600;color:var(--green)">✓ Synced</span></div>
+          <div style="display:flex;justify-content:space-between"><span class="stat-label">Last Block</span><span style="font-weight:600">2 min ago</span></div>
+          <div style="display:flex;justify-content:space-between"><span class="stat-label">Network Health</span><span style="font-weight:600;color:var(--green)">Excellent</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="card-icon">📡</span>Your Node</div></div>
+        <div style="display:flex;flex-direction:column;gap:1rem">
+          <div><div class="stat-label">Node ID</div><div class="identity-box" style="margin-top:.5rem">node:abc123...xyz789</div></div>
+          <div style="display:flex;justify-content:space-between"><span class="stat-label">Uptime</span><span style="font-weight:600">99.8%</span></div>
+          <div style="display:flex;justify-content:space-between"><span class="stat-label">Data Synced</span><span style="font-weight:600">2.4 GB</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="card-icon">⚙️</span>Federation Settings</div></div>
+        <div style="display:flex;flex-direction:column;gap:.75rem">
+          <button class="btn btn-secondary" style="width:100%">Add Peer</button>
+          <button class="btn btn-secondary" style="width:100%">Sync Now</button>
+          <button class="btn btn-secondary" style="width:100%">View Peers</button>
+          <button class="btn btn-secondary" style="width:100%">Export Data</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+    import { SRCPApp, quickSetup } from '../src/srcp.js';
+
+    // Initialize SRCP system with navigation
+    await quickSetup({ includeNavigation: true });
+
+    /**
+     * SrcpDashboardApp
+     * Modernized with SRCP system integration
+     */
+    class SrcpDashboardApp extends SRCPApp {
+      constructor() {
+        super({
+          appId: 'srcp-dashboard',
+          appTitle: 'SRCP Dashboard - Sovereign Reputation Protocol',
+          version: '2.0.0'
+        });
+      }
+
+      async onInit() {
+        this.log('Initializing SRCP Dashboard - Sovereign Reputation Protocol...');
+        
+        // Dashboard UI is already rendered in HTML
+        // App-specific initialization can go here
+        
+        this.log('SRCP Dashboard - Sovereign Reputation Protocol ready!');
+      }
+    }
+
+    // Initialize app
+    const app = new SrcpDashboardApp();
+    await app.init();
+    window.app = app;
+
+    // ========================================
+    // TAB SWITCHING FUNCTIONALITY
+    // ========================================
+    function initTabSwitching() {
+      const tabs = document.querySelectorAll('.nav-tab');
+      const panels = document.querySelectorAll('.panel');
+      
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          // Remove active class from all tabs and panels
+          tabs.forEach(t => t.classList.remove('active'));
+          panels.forEach(p => p.classList.remove('active'));
+          
+          // Add active class to clicked tab
+          tab.classList.add('active');
+          
+          // Show corresponding panel
+          const panelId = tab.getAttribute('data-tab');
+          const panel = document.getElementById(panelId);
+          if (panel) {
+            panel.classList.add('active');
+            console.log(`✓ Switched to ${panelId} panel`);
+          } else {
+            console.error(`❌ Panel not found: ${panelId}`);
+          }
+        });
+      });
+      
+      console.log('✓ Tab switching initialized');
+    }
+
+    // ========================================
+    // INITIALIZE IDENTITY BUTTON
+    // ========================================
+    function initIdentityButton() {
+      const initBtn = document.getElementById('initBtn');
+      if (initBtn) {
+        initBtn.addEventListener('click', async () => {
+          try {
+            initBtn.disabled = true;
+            initBtn.textContent = 'Initializing...';
+            
+            // Get identity from SRCP system
+            const identity = window.SRCP?.identity || window.identity;
+            if (identity) {
+              showToast('✓ Identity already initialized: ' + identity.did, 'success');
+              initBtn.textContent = 'Identity Ready';
+            } else {
+              showToast('⚠️  SRCP system not fully loaded', 'warning');
+              initBtn.disabled = false;
+              initBtn.textContent = 'Initialize Identity';
+            }
+          } catch (error) {
+            console.error('Identity initialization error:', error);
+            showToast('❌ Failed to initialize identity', 'error');
+            initBtn.disabled = false;
+            initBtn.textContent = 'Retry Initialize';
+          }
+        });
+        console.log('✓ Identity button initialized');
+      }
+    }
+
+    // ========================================
+    // TOAST NOTIFICATION SYSTEM
+    // ========================================
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = message;
+      
+      const colors = {
+        success: 'var(--green)',
+        error: 'var(--red)',
+        warning: 'var(--yellow)',
+        info: 'var(--cyan)'
+      };
+      
+      toast.style.borderColor = colors[type] || colors.info;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // ========================================
+    // TEST FUNCTIONS FOR DEBUGGING
+    // ========================================
+    window.testIdentity = function() {
+      const identity = window.SRCP?.identity || window.identity;
+      if (identity) {
+        console.log('✓ Identity:', identity);
+        console.log('  DID:', identity.did);
+        console.log('  Username:', identity.username);
+        showToast('✓ Identity test passed', 'success');
+        return identity;
+      } else {
+        console.error('❌ No identity found');
+        showToast('❌ No identity found', 'error');
+        return null;
+      }
+    };
+
+    window.testTokens = function() {
+      const ledger = window.SRCP?.ledger || window.ledger;
+      if (ledger) {
+        const balance = ledger.getBalance();
+        console.log('✓ Token balance:', balance);
+        showToast(`✓ Balance: ${balance} SRCP`, 'success');
+        return balance;
+      } else {
+        console.error('❌ Ledger not initialized');
+        showToast('❌ Ledger not available', 'error');
+        return 0;
+      }
+    };
+
+    window.testKarma = function() {
+      const karma = window.SRCP?.karma || window.karma;
+      if (karma) {
+        const score = karma.getScore();
+        console.log('✓ Karma score:', score);
+        showToast(`✓ Karma: ${score}`, 'success');
+        return score;
+      } else {
+        console.error('❌ Karma system not initialized');
+        showToast('❌ Karma not available', 'error');
+        return 0;
+      }
+    };
+
+    window.testFederation = function() {
+      const federation = window.SRCP?.federation || window.federation;
+      if (federation) {
+        console.log('✓ Federation:', federation);
+        showToast('✓ Federation active', 'success');
+        return federation;
+      } else {
+        console.error('❌ Federation not initialized');
+        showToast('❌ Federation not available', 'error');
+        return null;
+      }
+    };
+
+    window.runAllTests = function() {
+      console.log('========================================');
+      console.log('Running Dashboard System Tests...');
+      console.log('========================================');
+      testIdentity();
+      testTokens();
+      testKarma();
+      testFederation();
+      console.log('========================================');
+      console.log('Tests complete! Check results above.');
+      console.log('========================================');
+    };
+
+    // ========================================
+    // INITIALIZE ALL UI COMPONENTS
+    // ========================================
+    document.addEventListener('DOMContentLoaded', () => {
+      initTabSwitching();
+      initIdentityButton();
+      console.log('✓ Dashboard UI fully initialized');
+      console.log('💡 Try these test commands in console:');
+      console.log('   testIdentity() - Test identity system');
+      console.log('   testTokens() - Test token ledger');
+      console.log('   testKarma() - Test karma system');
+      console.log('   testFederation() - Test federation');
+      console.log('   runAllTests() - Run all tests');
+    });
+  </script>
+</body>
+</html>

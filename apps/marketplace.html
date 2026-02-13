@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="srcp:did" content="did:srcp:app/marketplace">
+  <meta name="srcp:app" content="marketplace">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MarketPlace - Decentralized Commerce</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:linear-gradient(135deg,#0f2027 0%,#203a43 50%,#2c5364 100%);color:#fff;min-height:100vh;padding:20px}
+    .container{max-width:1600px;margin:0 auto}
+    header{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:15px;padding:30px;margin-bottom:30px;backdrop-filter:blur(10px)}
+    h1{font-size:2.5rem;margin-bottom:10px;background:linear-gradient(135deg,#00ff87 0%,#60efff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .subtitle{color:#aaa;font-size:1.1rem}
+    .main-layout{display:grid;grid-template-columns:300px 1fr;gap:30px}
+    @media (max-width:1024px){.main-layout{grid-template-columns:1fr}}
+    .sidebar{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:15px;padding:25px;backdrop-filter:blur(10px);height:fit-content;position:sticky;top:20px}
+    .sidebar h3{color:#00ff87;margin-bottom:20px;font-size:1.2rem}
+    .category-list{display:flex;flex-direction:column;gap:10px}
+    .category-item{padding:12px;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.05);border-radius:8px;cursor:pointer;transition:all .3s}
+    .category-item:hover,.category-item.active{background:rgba(0,255,135,.1);border-color:#00ff87}
+    .product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
+    .product-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:15px;overflow:hidden;transition:transform .3s,box-shadow .3s;cursor:pointer}
+    .product-card:hover{transform:translateY(-5px);box-shadow:0 10px 30px rgba(0,255,135,.2)}
+    .product-image{width:100%;height:200px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);display:flex;align-items:center;justify-content:center;font-size:4rem}
+    .product-info{padding:20px}
+    .product-title{font-size:1.1rem;font-weight:700;margin-bottom:10px;color:#00ff87}
+    .product-description{color:#aaa;font-size:.9rem;margin-bottom:15px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .product-footer{display:flex;justify-content:space-between;align-items:center}
+    .product-price{font-size:1.5rem;font-weight:700;color:#60efff}
+    .seller-info{display:flex;align-items:center;gap:5px;font-size:.8rem;color:#aaa}
+    .rating{color:#ffd700}
+    .fab{position:fixed;bottom:30px;right:30px;width:60px;height:60px;background:linear-gradient(135deg,#00ff87 0%,#60efff 100%);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;cursor:pointer;box-shadow:0 5px 20px rgba(0,255,135,.5);transition:transform .3s}
+    .fab:hover{transform:scale(1.1)}
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1000;align-items:center;justify-content:center;padding:20px}
+    .modal.active{display:flex}
+    .modal-content{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:30px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto}
+    .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}
+    .modal-title{font-size:1.8rem;color:#00ff87}
+    .close-btn{background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;padding:0;width:30px;height:30px}
+    .form-group{margin-bottom:20px}
+    label{display:block;margin-bottom:8px;color:#aaa;font-size:.9rem}
+    input,select,textarea{width:100%;padding:12px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:1rem}
+    textarea{min-height:100px;resize:vertical;font-family:inherit}
+    button{padding:12px 30px;background:linear-gradient(135deg,#00ff87 0%,#60efff 100%);border:none;border-radius:8px;color:#000;font-size:1rem;font-weight:700;cursor:pointer;transition:transform .2s}
+    button:hover{transform:translateY(-2px)}
+    .badge{display:inline-block;padding:5px 12px;border-radius:20px;font-size:.75rem;font-weight:700}
+    .badge-verified{background:rgba(0,255,135,.2);color:#00ff87}
+    .escrow-status{padding:15px;background:rgba(255,193,7,.1);border:1px solid rgba(255,193,7,.3);border-radius:10px;margin-top:20px}
+    .search-bar{display:flex;gap:10px;margin-bottom:30px}
+    .search-bar input{flex:1}
+    .srcp-nav{display:flex;gap:12px;padding:10px;background:#0f1522;border-bottom:1px solid #1e2740;position:sticky;top:0;z-index:999;flex-wrap:wrap}
+    .srcp-nav a{color:#9bdcff;text-decoration:none;font-weight:600;font-size:13px;padding:4px 8px;border-radius:4px;transition:background .2s}
+    .srcp-nav a:hover{background:rgba(155,220,255,.1)}
+  </style>
+    <script>
+    // SRCP Navigation System
+    window.APP_PATHS = {
+      'marketplace': 'marketplace.html',
+      'decentralbank': 'decentralbank.html',
+      'skillswap': 'skillswap.html',
+      'govchain': 'govchain.html',
+      'knowledgechain': 'knowledgechain.html',
+      'truthrank': 'truthrank.html',
+      'dashboard': 'srcp-dashboard.html',
+      'explorer': 'srcp-complete-explorer.html',
+      'platform': 'srcp-jsonflow-platform.html',
+      'demo': 'demo.html'
+    };
+
+    window.parseDID = function(didUri) {
+      const pattern = /^did:srcp:app\/([a-z-]+)(?:\/([a-z0-9-]+))?$/;
+      const match = didUri.match(pattern);
+      if (!match) return null;
+      return { appName: match[1], instanceId: match[2] || null };
+    };
+
+    window.navigateToDID = function(didUri) {
+      const parsed = window.parseDID(didUri);
+      if (!parsed) return;
+      const appPath = window.APP_PATHS[parsed.appName];
+      if (!appPath) {
+        console.error('Unknown app:', parsed.appName);
+        return;
+      }
+      if (parsed.instanceId) {
+        window.location.href = appPath + '?did=' + encodeURIComponent(didUri) + '&instance=' + parsed.instanceId;
+      } else {
+        window.location.href = appPath + '?did=' + encodeURIComponent(didUri);
+      }
+    };
+  </script>
+
+</head>
+<body>
+
+  <nav class="srcp-nav">
+  <a href="./srcp-complete-explorer.html">🧭 Explorer</a>
+  <a href="./srcp-dashboard.html">📊 Dashboard</a>
+  <a href="./marketplace.html">🛒 Marketplace</a>
+  <a href="./truthrank.html">🧠 TruthRank</a>
+  <a href="./govchain.html">🏛️ GovChain</a>
+  <a href="./knowledgechain.html">📚 Knowledge</a>
+  <a href="./skillswap.html">💼 SkillSwap</a>
+  <a href="./decentralbank.html">💰 Bank</a>
+  <a href="./messenger.html">💬 Messenger</a>
+  <a href="./uyea.html">🤖 UYEA</a>
+  <a href="./complete-demo.html">🔥 Demo</a>
+  <a href="./truthrank-portal.html">🏠 Portal</a>
+  <a href="./srcp-jsonflow-platform.html">🔥 Json-Flow</a>
+  <a href="./truthrank-test-suite.html">🏠 Test</a>
+  <a href="./olSearch.html">🏠 Address-Manager</a>
+  <a href="./token-platform.html">🏠 Token</a>
+   <a href="./srcp-jbc.html">🏠 PLATFORM</a>
+</nav>
+<div class="container">
+  <header>
+    <h1>🛒 MarketPlace</h1>
+    <p class="subtitle">Trustless Commerce • Built-in Escrow • Community Dispute Resolution</p>
+  </header>
+
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="Search products...">
+    <button onclick="searchProducts()">Search</button>
+  </div>
+
+  <div class="main-layout">
+    <aside class="sidebar">
+      <h3>Categories</h3>
+      <div class="category-list" id="categoryList">
+        <div class="category-item active" data-category="all">All Products</div>
+        <div class="category-item" data-category="electronics">📱 Electronics</div>
+        <div class="category-item" data-category="clothing">👕 Clothing</div>
+        <div class="category-item" data-category="books">📚 Books</div>
+        <div class="category-item" data-category="home">🏠 Home & Garden</div>
+        <div class="category-item" data-category="digital">💾 Digital Goods</div>
+        <div class="category-item" data-category="services">⚙️ Services</div>
+      </div>
+      <h3 style="margin-top:30px">Your Karma</h3>
+      <div style="font-size:2rem;color:#00ff87;text-align:center">
+        <span id="userKarma">500</span>
+      </div>
+      <div style="text-align:center;color:#aaa;font-size:.8rem">Min 300 karma to sell</div>
+    </aside>
+
+    <main>
+      <div class="product-grid" id="productGrid"></div>
+    </main>
+  </div>
+</div>
+
+<div class="fab" onclick="openListingModal()">+</div>
+
+<div class="modal" id="listingModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Create Listing</h2>
+      <button class="close-btn" onclick="closeModal('listingModal')">×</button>
+    </div>
+    <form id="listingForm">
+      <div class="form-group"><label>Product Title</label><input type="text" id="listingTitle" required></div>
+      <div class="form-group"><label>Category</label><select id="listingCategory" required>
+        <option value="electronics">Electronics</option>
+        <option value="clothing">Clothing</option>
+        <option value="books">Books</option>
+        <option value="home">Home & Garden</option>
+        <option value="digital">Digital Goods</option>
+        <option value="services">Services</option>
+      </select></div>
+      <div class="form-group"><label>Price (Tokens)</label><input type="number" id="listingPrice" min="1" required></div>
+      <div class="form-group"><label>Description</label><textarea id="listingDescription" required></textarea></div>
+      <div class="form-group"><label>Condition</label><select id="listingCondition">
+        <option value="new">New</option>
+        <option value="like-new">Like New</option>
+        <option value="good">Good</option>
+        <option value="fair">Fair</option>
+      </select></div>
+      <button type="submit">List Product</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal" id="productModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title" id="productTitle"></h2>
+      <button class="close-btn" onclick="closeModal('productModal')">×</button>
+    </div>
+    <div id="productDetail"></div>
+  </div>
+</div>
+
+<script type="module">
+import { SovereignEngine } from '../src/engine.js';
+
+class MarketPlace extends SovereignEngine {
+  constructor(identity){
+    super(identity);
+    this.listings=[];
+    this.transactions=[];
+    this.listingIdCounter=1;
+    this.transactionIdCounter=1;
+    this.MIN_SELLER_KARMA=300;
+  }
+
+  static async create(username){
+    const identity={username,did:`did:srcp:${username}`};
+    return new this(identity);
+  }
+
+  async createListing(title,category,price,description,condition){
+    if(this.karma<this.MIN_SELLER_KARMA)throw new Error(`Need at least ${this.MIN_SELLER_KARMA} karma to sell`);
+    const listing={
+      id:`ITEM_${this.listingIdCounter++}`,
+      seller:this.identity.username,
+      sellerDID:this.identity.did,
+      sellerKarma:this.karma,
+      title,
+      category,
+      price:Number(price),
+      description,
+      condition,
+      status:'active',
+      created:Date.now(),
+      views:0,
+      favorites:0
+    };
+    this.listings.push(listing);
+    await this._createEntry('listing_created',{listingId:listing.id,price:listing.price});
+    return listing;
+  }
+
+  async purchaseItem(listingId){
+    const listing=this.listings.find(l=>l.id===listingId);
+    if(!listing)throw new Error('Listing not found');
+    if(listing.status!=='active')throw new Error('Item not available');
+    if(listing.seller===this.identity.username)throw new Error('Cannot buy your own item');
+    if(this.tokens<listing.price)throw new Error('Insufficient tokens');
+    const txn={
+      id:`TXN_${this.transactionIdCounter++}`,
+      listingId,
+      buyer:this.identity.username,
+      buyerDID:this.identity.did,
+      seller:listing.seller,
+      sellerDID:listing.sellerDID,
+      amount:listing.price,
+      status:'escrow',
+      created:Date.now(),
+      escrowReleased:false,
+      disputeOpen:false
+    };
+    this.transactions.push(txn);
+    listing.status='sold';
+    this.tokens-=listing.price;
+    await this._createEntry('purchase_initiated',{transactionId:txn.id,listingId,amount:listing.price});
+    return txn;
+  }
+
+  getActiveListings(){return this.listings.filter(l=>l.status==='active')}
+  getListingsByCategory(category){return this.listings.filter(l=>l.status==='active'&&(category==='all'||l.category===category))}
+  getSellerRating(username){
+    const sales=this.transactions.filter(t=>t.seller===username&&t.sellerRating);
+    if(!sales.length)return{rating:0,count:0};
+    const avg=sales.reduce((s,t)=>s+t.sellerRating,0)/sales.length;
+    return{rating:Math.round(avg*10)/10,count:sales.length}
+  }
+}
+
+let marketplace=null;
+let currentCategory='all';
+
+async function init(){
+  marketplace=await MarketPlace.create('user_'+Date.now());
+  marketplace.karma=500;
+  marketplace.tokens=1000;
+  await createDemoListings();
+  renderProducts();
+  setupEventListeners();
+  updateUI();
+}
+
+function updateUI(){document.getElementById('userKarma').textContent=marketplace.karma}
+
+function setupEventListeners(){
+  document.querySelectorAll('.category-item').forEach(item=>{
+    item.addEventListener('click',()=>{
+      document.querySelectorAll('.category-item').forEach(i=>i.classList.remove('active'));
+      item.classList.add('active');
+      currentCategory=item.dataset.category;
+      renderProducts();
+    })
+  });
+  document.getElementById('listingForm').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const title=document.getElementById('listingTitle').value.trim();
+    const category=document.getElementById('listingCategory').value;
+    const price=document.getElementById('listingPrice').value;
+    const description=document.getElementById('listingDescription').value.trim();
+    const condition=document.getElementById('listingCondition').value;
+    try{
+      await marketplace.createListing(title,category,price,description,condition);
+      alert('Listing created!');
+      closeModal('listingModal');
+      document.getElementById('listingForm').reset();
+      renderProducts();
+    }catch(err){alert('Error: '+err.message)}
+  })
+}
+
+function renderProducts(){
+  const c=document.getElementById('productGrid');
+  const listings=marketplace.getListingsByCategory(currentCategory);
+  const icons={electronics:'📱',clothing:'👕',books:'📚',home:'🏠',digital:'💾',services:'⚙️'};
+  c.innerHTML=listings.map(l=>{
+    const r=marketplace.getSellerRating(l.seller);
+    return`
+      <div class="product-card" onclick="showProduct('${l.id}')">
+        <div class="product-image">${icons[l.category]||'📦'}</div>
+        <div class="product-info">
+          <div class="product-title">${l.title}</div>
+          <div class="product-description">${l.description}</div>
+          <div class="product-footer">
+            <div class="product-price">${l.price} ⚡</div>
+            <div class="seller-info">
+              <span class="rating">★ ${r.rating||'New'}</span>
+              ${l.sellerKarma>=500?'<span class="badge badge-verified">✓ Verified</span>':''}
+            </div>
+          </div>
+        </div>
+      </div>
+    `
+  }).join('')||'<div class="empty-state"><div class="empty-icon">🛒</div><p>No products found</p></div>';
+}
+
+window.showProduct=id=>{
+  const l=marketplace.listings.find(x=>x.id===id);
+  if(!l)return;
+  const r=marketplace.getSellerRating(l.seller);
+  document.getElementById('productTitle').textContent=l.title;
+  document.getElementById('productDetail').innerHTML=`
+    <div style="margin-bottom:20px">
+      <div style="font-size:2rem;color:#00ff87;margin-bottom:10px">${l.price} tokens</div>
+      <div style="color:#aaa;margin-bottom:15px">Condition: ${l.condition}</div>
+    </div>
+    <div style="margin-bottom:20px">
+      <h3 style="color:#60efff;margin-bottom:10px">Description</h3>
+      <p style="line-height:1.6">${l.description}</p>
+    </div>
+    <div style="margin-bottom:20px">
+      <h3 style="color:#60efff;margin-bottom:10px">Seller Information</h3>
+      <div style="display:flex;gap:20px;align-items:center">
+        <div><strong>${l.seller}</strong> ${l.sellerKarma>=500?'<span class="badge badge-verified">✓ Verified</span>':''}</div>
+        <div>Karma: ${l.sellerKarma}</div>
+        <div>Rating: ★ ${r.rating||'New'} (${r.count} sales)</div>
+      </div>
+    </div>
+    ${l.status==='active'&&l.seller!==marketplace.identity.username?`
+      <div class="escrow-status">
+        <h4 style="color:#ffc107;margin-bottom:10px">🔒 Escrow Protection</h4>
+        <p style="color:#aaa;font-size:.9rem">Payment held in escrow until you confirm delivery. Community dispute resolution available.</p>
+      </div>
+      <button onclick="purchaseProduct('${l.id}')" style="width:100%;margin-top:20px">Buy Now</button>
+    `:l.status==='sold'?`
+      <div style="text-align:center;padding:20px;color:#aaa">This item has been sold</div>
+    `:`
+      <div style="text-align:center;padding:20px;color:#aaa">This is your listing</div>
+    `}
+  `;
+  document.getElementById('productModal').classList.add('active')
+};
+
+window.purchaseProduct=async id=>{
+  try{
+    const txn=await marketplace.purchaseItem(id);
+    alert('Purchase initiated – tokens in escrow');
+    closeModal('productModal');
+    renderProducts();
+    updateUI();
+    setTimeout(async()=>{
+      if(confirm('Item delivered? Confirm to release funds.')){
+        await marketplace.confirmDelivery(txn.id);
+        alert('Funds released to seller. Rate the transaction?');
+      }
+    },5000)
+  }catch(e){alert('Error: '+e.message)}
+};
+
+window.openListingModal=()=>{if(marketplace.karma<marketplace.MIN_SELLER_KARMA){alert(`Need ≥${marketplace.MIN_SELLER_KARMA} karma to sell`);return}document.getElementById('listingModal').classList.add('active')};
+window.closeModal=id=>document.getElementById(id).classList.remove('active');
+
+window.searchProducts=()=>{
+  const q=document.getElementById('searchInput').value.toLowerCase().trim();
+  const c=document.getElementById('productGrid');
+  const filtered=marketplace.listings.filter(l=>l.status==='active'&&(l.title.toLowerCase().includes(q)||l.description.toLowerCase().includes(q)));
+  const icons={electronics:'📱',clothing:'👕',books:'📚',home:'🏠',digital:'💾',services:'⚙️'};
+  c.innerHTML=filtered.map(l=>{
+    const r=marketplace.getSellerRating(l.seller);
+    return`
+      <div class="product-card" onclick="showProduct('${l.id}')">
+        <div class="product-image">${icons[l.category]||'📦'}</div>
+        <div class="product-info">
+          <div class="product-title">${l.title}</div>
+          <div class="product-description">${l.description}</div>
+          <div class="product-footer">
+            <div class="product-price">${l.price} ⚡</div>
+            <div class="seller-info"><span class="rating">★ ${r.rating||'New'}</span></div>
+          </div>
+        </div>
+      </div>
+    `
+  }).join('')||'<div class="empty-state"><div class="empty-icon">🔍</div><p>No matching products</p></div>';
+};
+
+async function createDemoListings(){
+  const demos=[
+    {seller:'tech_seller',karma:800,title:'iPhone 15 Pro',category:'electronics',price:250,description:'Brand new, 256GB, Space Black. Sealed.',condition:'new'},
+    {seller:'book_lover',karma:600,title:'Clean Code – Robert Martin',category:'books',price:30,description:'Excellent condition. Must-read for developers.',condition:'like-new'},
+    {seller:'fashion_hub',karma:750,title:'Vintage Leather Jacket',category:'clothing',price:80,description:'80s original, size M. Unique.',condition:'good'},
+    {seller:'dev_services',karma:900,title:'Full-Stack Web Dev Course',category:'digital',price:50,description:'40h video content + resources.',condition:'new'},
+    {seller:'home_goods',karma:550,title:'Smart Home Hub',category:'home',price:120,description:'Works with Alexa/Google.',condition:'new'},
+    {seller:'freelancer_pro',karma:850,title:'Professional Logo Design',category:'services',price:100,description:'3 concepts + unlimited revisions.',condition:'new'}
+  ];
+  for(const d of demos){
+    const l={
+      id:`ITEM_${marketplace.listingIdCounter++}`,
+      seller:d.seller,
+      sellerDID:`did:srcp:${d.seller}`,
+      sellerKarma:d.karma,
+      title:d.title,
+      category:d.category,
+      price:d.price,
+      description:d.description,
+      condition:d.condition,
+      status:'active',
+      created:Date.now(),
+      views:Math.floor(Math.random()*100),
+      favorites:Math.floor(Math.random()*20)
+    };
+    marketplace.listings.push(l);
+  }
+}
+
+init();
+
+
+// Search functionality
+function searchProducts() {
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    marketplace.searchQuery = searchInput.value.toLowerCase();
+    renderListings();
+  }
+}
+
+// Modal controls
+function openListingModal() {
+  const modal = document.getElementById('listingModal');
+  if (modal) {
+    modal.classList.add('active');
+  }
+}
+
+function closeModal() {
+  const modals = document.querySelectorAll('.modal');
+  modals.forEach(modal => modal.classList.remove('active'));
+}
+
+// Product interactions
+function showProduct(productId) {
+  const product = marketplace.listings.find(l => l.id === productId);
+  if (product) {
+    alert('Product: ' + product.title + '\nPrice: $' + product.price + '\nSeller: ' + product.seller);
+  }
+}
+
+function purchaseProduct(productId) {
+  const product = marketplace.listings.find(l => l.id === productId);
+  if (product && confirm('Purchase ' + product.title + ' for $' + product.price + '?')) {
+    alert('Purchase initiated. In production, this would use the SRCP escrow system.');
+    product.status = 'sold';
+    renderListings();
+  }
+}
+
+</script>
+</body>
+</html>

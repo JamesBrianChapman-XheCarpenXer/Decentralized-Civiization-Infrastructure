@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SRCP Token Platform - Decentralized Identity & Economics</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+
+    .srcp-nav {
+      display: flex;
+      gap: 14px;
+      padding: 12px 20px;
+      background: rgba(15, 23, 42, 0.92);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+      flex-wrap: wrap;
+    }
+
+    .srcp-nav a {
+      color: #a5d8ff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.92rem;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+
+    .srcp-nav a:hover {
+      background: rgba(165, 216, 255, 0.12);
+      color: white;
+    }
+
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      color: white;
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .subtitle {
+      font-size: 1.1rem;
+      opacity: 0.95;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+    }
+
+    .card h2 {
+      color: #667eea;
+      margin-bottom: 15px;
+      font-size: 1.4rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .icon {
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+    }
+
+    .balance-display {
+      font-size: 3rem;
+      font-weight: bold;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 20px 0;
+    }
+
+    .identity-info {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 15px 0;
+      word-break: break-all;
+    }
+
+    .identity-info label {
+      display: block;
+      font-weight: 600;
+      color: #667eea;
+      margin-bottom: 5px;
+      font-size: 0.9rem;
+    }
+
+    .identity-info .value {
+      color: #666;
+      font-size: 0.9rem;
+      font-family: 'Courier New', monospace;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      box-shadow: 0 4px 15px rgba(108, 117, 125, 0.4);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .action-btn {
+      padding: 10px;
+      font-size: 0.9rem;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .stat-row:last-child {
+      border-bottom: none;
+    }
+
+    .stat-label {
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    .stat-value {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .stat-value.positive {
+      color: #28a745;
+    }
+
+    .stat-value.negative {
+      color: #dc3545;
+    }
+
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1rem;
+      margin-bottom: 10px;
+      transition: border-color 0.3s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .transaction-log {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 15px;
+    }
+
+    .transaction-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+
+    .transaction-type {
+      font-weight: 600;
+      color: #667eea;
+    }
+
+    .transaction-amount {
+      font-weight: 600;
+    }
+
+    .transaction-amount.earn {
+      color: #28a745;
+    }
+
+    .transaction-amount.spend {
+      color: #dc3545;
+    }
+
+    .alert {
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      font-size: 0.9rem;
+    }
+
+    .alert-success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .alert-error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .alert-warning {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    .status-indicator.active {
+      background: #28a745;
+      box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+    }
+
+    .status-indicator.inactive {
+      background: #dc3545;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 2rem;
+      }
+
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+
+      .action-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+ 
+  <nav class="srcp-nav">
+  <a href="./srcp-complete-explorer.html">🧭 Explorer</a>
+  <a href="./srcp-dashboard.html">📊 Dashboard</a>
+  <a href="./marketplace.html">🛒 Marketplace</a>
+  <a href="./truthrank.html">🧠 TruthRank</a>
+  <a href="./govchain.html">🏛️ GovChain</a>
+  <a href="./knowledgechain.html">📚 Knowledge</a>
+  <a href="./skillswap.html">💼 SkillSwap</a>
+  <a href="./decentralbank.html">💰 Bank</a>
+  <a href="./messenger.html">💬 Messenger</a>
+  <a href="./uyea.html">🤖 UYEA</a>
+  <a href="./complete-demo.html">🔥 Demo</a>
+  <a href="./truthrank-portal.html">🏠 Portal</a>
+  <a href="./srcp-jsonflow-platform.html">🔥 Json-Flow</a>
+  <a href="./truthrank-test-suite.html">🏠 Test</a>
+  <a href="./olSearch.html">🏠 Address-Manager</a>
+  <a href="./token-platform.html">🏠 Token</a>
+   <a href="./srcp-jbc.html">🏠 PLATFORM</a>
+</nav>
+  <div class="container">
+    <header>
+      <h1>🌐 SRCP Token Platform</h1>
+      <p class="subtitle">Decentralized Identity & Token Economics</p>
+    </header>
+
+    <div id="app">
+      <!-- Identity Setup Screen -->
+      <div id="setupScreen" class="card" style="max-width: 500px; margin: 0 auto;">
+        <h2><span class="icon">🔐</span> Create Your Identity</h2>
+        <p style="margin-bottom: 20px; color: #666;">Get started with a cryptographic identity and 1000 initial tokens</p>
+        
+        <input type="text" id="usernameInput" placeholder="Choose a username" maxlength="20">
+        
+        <button class="btn" onclick="app.createIdentity()">
+          🚀 Create Identity & Get Tokens
+        </button>
+
+        <div class="alert alert-warning" style="margin-top: 20px;">
+          <strong>⚠️ Important:</strong> Your private key will be stored securely in your browser. Make sure to export and backup your identity after creation.
+        </div>
+      </div>
+
+      <!-- Main Dashboard (hidden until identity created) -->
+      <div id="dashboard" style="display: none;">
+        <div class="dashboard">
+          <!-- Token Balance Card -->
+          <div class="card">
+            <h2><span class="icon">💰</span> Token Balance</h2>
+            <div class="balance-display" id="tokenBalance">0</div>
+            <div class="stat-row">
+              <span class="stat-label">Total Earned</span>
+              <span class="stat-value positive" id="totalEarned">0</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Total Spent</span>
+              <span class="stat-value negative" id="totalSpent">0</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Net Flow</span>
+              <span class="stat-value" id="netFlow">0</span>
+            </div>
+          </div>
+
+          <!-- Identity Card -->
+          <div class="card">
+            <h2><span class="icon">👤</span> Your Identity</h2>
+            <div class="identity-info">
+              <label>Username</label>
+              <div class="value" id="username">-</div>
+            </div>
+            <div class="identity-info">
+              <label>DID (Decentralized ID)</label>
+              <div class="value" id="did">-</div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+              <button class="btn btn-secondary" onclick="app.exportIdentity()" style="flex: 1;">
+                💾 Export
+              </button>
+              <button class="btn btn-secondary" onclick="app.signMessage()" style="flex: 1;">
+                ✍️ Sign
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Actions Card -->
+          <div class="card">
+            <h2><span class="icon">⚡</span> Quick Actions</h2>
+            <p style="margin-bottom: 15px; color: #666; font-size: 0.9rem;">Perform actions to earn or spend tokens</p>
+            
+            <div class="action-grid">
+              <button class="btn action-btn" onclick="app.performAction('upload')">
+                📤 Upload (-2)
+              </button>
+              <button class="btn action-btn" onclick="app.performAction('pin')">
+                📌 Pin (-1)
+              </button>
+              <button class="btn action-btn" onclick="app.performAction('comment')">
+                💬 Comment (-0.5)
+              </button>
+              <button class="btn action-btn" onclick="app.performAction('like')">
+                👍 Like (-0.1)
+              </button>
+            </div>
+
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #eee;">
+              <h3 style="color: #28a745; margin-bottom: 10px; font-size: 1.1rem;">Earn Tokens</h3>
+              <button class="btn" onclick="app.performAction('receive_like')" style="background: #28a745; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);">
+                ⭐ Receive Like (+5)
+              </button>
+              <button class="btn" onclick="app.performAction('daily_active')" style="background: #17a2b8; box-shadow: 0 4px 15px rgba(23, 162, 184, 0.4);">
+                🎯 Daily Bonus (+10)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transaction History -->
+        <div class="card">
+          <h2><span class="icon">📊</span> Transaction History</h2>
+          <div class="transaction-log" id="transactionLog">
+            <p style="text-align: center; color: #999; padding: 20px;">No transactions yet. Start by performing some actions!</p>
+          </div>
+        </div>
+
+        <!-- Economic Stats -->
+        <div class="card">
+          <h2><span class="icon">📈</span> Economic Statistics</h2>
+          <div class="stat-row">
+            <span class="stat-label">Deflationary Ratio</span>
+            <span class="stat-value" id="deflationRatio">-</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Total Actions</span>
+            <span class="stat-value" id="totalActions">0</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">System Status</span>
+            <span class="stat-value">
+              <span class="status-indicator active"></span>
+              Deflationary
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Import the SRCP modules
+    import { TokenEconomics } from '../src/token-economics.js';
+    import { Identity } from '../src/identity.js';
+
+    class TokenPlatformApp {
+      constructor() {
+        this.identity = null;
+        this.balance = 0;
+        this.transactions = [];
+        this.stats = {
+          totalEarned: 0,
+          totalSpent: 0,
+          actions: []
+        };
+      }
+
+      async createIdentity() {
+        const username = document.getElementById('usernameInput').value.trim();
+        
+        if (!username) {
+          alert('Please enter a username!');
+          return;
+        }
+
+        try {
+          // Show loading
+          const btn = event.target;
+          btn.disabled = true;
+          btn.textContent = '⏳ Creating Identity...';
+
+          // Create cryptographic identity
+          this.identity = await Identity.create(username);
+          
+          // Initialize token balance
+          this.balance = TokenEconomics.INITIAL_BALANCE;
+
+          // Save to localStorage
+          const exportedIdentity = await this.identity.export();
+          localStorage.setItem('srcp_identity', JSON.stringify(exportedIdentity));
+          localStorage.setItem('srcp_balance', this.balance.toString());
+          localStorage.setItem('srcp_transactions', JSON.stringify(this.transactions));
+
+          // Show dashboard
+          this.showDashboard();
+          
+        } catch (error) {
+          console.error('Failed to create identity:', error);
+          alert('Failed to create identity. Please try again.');
+          btn.disabled = false;
+          btn.textContent = '🚀 Create Identity & Get Tokens';
+        }
+      }
+
+      showDashboard() {
+        document.getElementById('setupScreen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        this.updateUI();
+      }
+
+      updateUI() {
+        // Update balance
+        document.getElementById('tokenBalance').textContent = this.balance.toFixed(2);
+        
+        // Update identity info
+        document.getElementById('username').textContent = this.identity.username;
+        document.getElementById('did').textContent = this.identity.did;
+
+        // Update stats
+        const stats = this.calculateStats();
+        document.getElementById('totalEarned').textContent = `+${stats.totalEarned.toFixed(2)}`;
+        document.getElementById('totalSpent').textContent = `-${stats.totalSpent.toFixed(2)}`;
+        document.getElementById('netFlow').textContent = stats.netFlow.toFixed(2);
+        document.getElementById('netFlow').className = `stat-value ${stats.netFlow >= 0 ? 'positive' : 'negative'}`;
+        
+        // Update economic stats
+        document.getElementById('totalActions').textContent = this.transactions.length;
+        if (stats.deflationRatio > 0) {
+          document.getElementById('deflationRatio').textContent = stats.deflationRatio.toFixed(2) + 'x';
+        } else {
+          document.getElementById('deflationRatio').textContent = 'N/A';
+        }
+
+        // Update transaction log
+        this.updateTransactionLog();
+      }
+
+      calculateStats() {
+        let totalEarned = 0;
+        let totalSpent = 0;
+
+        for (const tx of this.transactions) {
+          if (tx.change > 0) {
+            totalEarned += tx.change;
+          } else {
+            totalSpent += Math.abs(tx.change);
+          }
+        }
+
+        const netFlow = totalEarned - totalSpent;
+        const deflationRatio = totalSpent / (totalEarned || 1);
+
+        return { totalEarned, totalSpent, netFlow, deflationRatio };
+      }
+
+      performAction(actionType) {
+        const before = this.balance;
+        
+        // Check if can afford
+        if (!TokenEconomics.canAfford(this.balance, actionType)) {
+          alert(`Insufficient balance! You need ${TokenEconomics.getCost(actionType)} tokens.`);
+          return;
+        }
+
+        // Apply action
+        this.balance = TokenEconomics.applyAction(this.balance, { type: actionType });
+        const change = this.balance - before;
+
+        // Record transaction
+        const transaction = {
+          type: actionType,
+          before,
+          after: this.balance,
+          change,
+          timestamp: Date.now()
+        };
+
+        this.transactions.push(transaction);
+
+        // Save state
+        this.saveState();
+
+        // Update UI
+        this.updateUI();
+
+        // Show feedback
+        this.showActionFeedback(actionType, change);
+      }
+
+      showActionFeedback(actionType, change) {
+        const message = change > 0 
+          ? `✅ Earned ${change.toFixed(2)} tokens!`
+          : `💸 Spent ${Math.abs(change).toFixed(2)} tokens`;
+        
+        // Could implement a toast notification here
+        console.log(message);
+      }
+
+      updateTransactionLog() {
+        const logElement = document.getElementById('transactionLog');
+        
+        if (this.transactions.length === 0) {
+          logElement.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">No transactions yet. Start by performing some actions!</p>';
+          return;
+        }
+
+        const recentTransactions = this.transactions.slice(-10).reverse();
+        
+        logElement.innerHTML = recentTransactions.map(tx => {
+          const date = new Date(tx.timestamp).toLocaleTimeString();
+          const changeClass = tx.change > 0 ? 'earn' : 'spend';
+          const changeSign = tx.change > 0 ? '+' : '';
+          
+          return `
+            <div class="transaction-item">
+              <div>
+                <div class="transaction-type">${this.formatActionType(tx.type)}</div>
+                <div style="color: #999; font-size: 0.8rem;">${date}</div>
+              </div>
+              <div class="transaction-amount ${changeClass}">
+                ${changeSign}${tx.change.toFixed(2)}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      formatActionType(type) {
+        const icons = {
+          upload: '📤 Upload',
+          pin: '📌 Pin',
+          comment: '💬 Comment',
+          like: '👍 Like',
+          receive_like: '⭐ Received Like',
+          receive_comment: '💬 Received Comment',
+          daily_active: '🎯 Daily Bonus',
+          create_poll: '📊 Create Poll',
+          flag: '🚩 Flag Content'
+        };
+        return icons[type] || type;
+      }
+
+      async exportIdentity() {
+        if (!this.identity) return;
+
+        try {
+          const exported = await this.identity.export();
+          const dataStr = JSON.stringify(exported, null, 2);
+          const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+          
+          const exportFileDefaultName = `srcp-identity-${this.identity.username}.json`;
+          
+          const linkElement = document.createElement('a');
+          linkElement.setAttribute('href', dataUri);
+          linkElement.setAttribute('download', exportFileDefaultName);
+          linkElement.click();
+
+          alert('✅ Identity exported! Keep this file safe - it contains your private key.');
+        } catch (error) {
+          console.error('Export failed:', error);
+          alert('Failed to export identity.');
+        }
+      }
+
+      async signMessage() {
+        const message = prompt('Enter a message to sign:');
+        if (!message) return;
+
+        try {
+          const signature = await this.identity.sign(message);
+          
+          alert(`Message signed successfully!\n\nSignature:\n${signature.substring(0, 64)}...`);
+          
+          console.log('Full signature:', signature);
+          console.log('Message:', message);
+          console.log('DID:', this.identity.did);
+        } catch (error) {
+          console.error('Signing failed:', error);
+          alert('Failed to sign message.');
+        }
+      }
+
+      saveState() {
+        localStorage.setItem('srcp_balance', this.balance.toString());
+        localStorage.setItem('srcp_transactions', JSON.stringify(this.transactions));
+      }
+
+      async loadState() {
+        const savedIdentity = localStorage.getItem('srcp_identity');
+        const savedBalance = localStorage.getItem('srcp_balance');
+        const savedTransactions = localStorage.getItem('srcp_transactions');
+
+        if (savedIdentity) {
+          try {
+            const identityData = JSON.parse(savedIdentity);
+            this.identity = await Identity.import(identityData);
+            this.balance = parseFloat(savedBalance) || 0;
+            this.transactions = JSON.parse(savedTransactions) || [];
+            
+            this.showDashboard();
+          } catch (error) {
+            console.error('Failed to load saved identity:', error);
+          }
+        }
+      }
+    }
+
+    // Initialize app
+    const app = new TokenPlatformApp();
+    window.app = app; // Make available to onclick handlers
+
+    // Load saved state on startup
+    app.loadState();
+  </script>
+</body>
+</html>

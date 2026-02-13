@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="srcp:did" content="did:srcp:app/public-feed">
+<meta name="srcp:app" content="public-feed">
+<title>SRCP Public Feed</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:#0d1117;color:#c9d1d9;min-height:100vh;line-height:1.6}
+.container{max-width:800px;margin:0 auto;padding:20px}
+header{background:rgba(22,27,34,.9);border:1px solid #30363d;border-radius:12px;padding:2rem;margin-bottom:2rem;backdrop-filter:blur(10px)}
+h1{font-size:2.5rem;margin-bottom:.5rem;background:linear-gradient(135deg,#58a6ff,#8a4fff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{color:#8b949e;font-size:1.1rem}
+.user-info{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1rem;margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center}
+.user-details{display:flex;align-items:center;gap:12px}
+.avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#58a6ff,#8a4fff);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;color:#fff}
+.username{font-size:1.1rem;font-weight:600}
+.did{font-size:.85rem;color:#8b949e;font-family:monospace}
+.post-box{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:1.5rem;margin-bottom:2rem}
+.tabs{display:flex;gap:1rem;margin-bottom:1rem;border-bottom:1px solid #21262d;padding-bottom:.5rem}
+.tab{padding:.5rem 1rem;cursor:pointer;border-radius:6px 6px 0 0;transition:all .2s;color:#8b949e;font-weight:600}
+.tab.active{background:rgba(88,166,255,.15);color:#58a6ff}
+.post-input{width:100%;background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px;color:#c9d1d9;font-family:inherit;font-size:1rem;resize:vertical;min-height:100px;margin-bottom:1rem}
+.file-input-container{margin-bottom:1rem}
+.file-input-label{display:inline-block;padding:.7rem 1.4rem;background:#21262d;border:1px solid #30363d;border-radius:8px;cursor:pointer;transition:all .2s}
+.file-input-label:hover{background:#30363d}
+.file-input{display:none}
+.file-preview{margin-top:1rem;max-width:100%;border-radius:8px;overflow:hidden}
+.file-preview img,.file-preview video{max-width:100%;height:auto;display:block}
+.post-btn{width:100%;padding:1rem;background:linear-gradient(135deg,#58a6ff,#8a4fff);border:none;border-radius:8px;color:#fff;font-weight:700;font-size:1rem;cursor:pointer;transition:all .2s}
+.post-btn:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(88,166,255,.3)}
+.post-btn:disabled{opacity:.5;cursor:not-allowed}
+.feed{display:flex;flex-direction:column;gap:1.5rem}
+.post-card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:1.5rem;transition:all .2s}
+.post-card:hover{border-color:#58a6ff}
+.post-header{display:flex;align-items:center;gap:12px;margin-bottom:1rem}
+.post-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#58a6ff,#8a4fff);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;color:#fff}
+.post-author-info{flex:1}
+.post-author{font-weight:600;color:#c9d1d9}
+.post-time{font-size:.85rem;color:#8b949e}
+.post-content{margin-bottom:1rem;color:#c9d1d9;line-height:1.8}
+.post-media{margin-bottom:1rem;border-radius:8px;overflow:hidden;background:#0d1117}
+.post-media img,.post-media video{width:100%;height:auto;display:block}
+.post-tags{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem}
+.tag{background:#21262d;color:#58a6ff;padding:.3rem .8rem;border-radius:999px;font-size:.85rem}
+.post-actions{display:flex;gap:1.5rem;padding-top:1rem;border-top:1px solid #21262d}
+.action-btn{background:none;border:none;color:#8b949e;cursor:pointer;display:flex;align-items:center;gap:.5rem;padding:.5rem .8rem;border-radius:6px;transition:all .2s;font-size:.95rem}
+.action-btn:hover{background:rgba(88,166,255,.1);color:#58a6ff}
+.action-btn.active{color:#58a6ff}
+.action-count{font-weight:600}
+.comments-section{margin-top:1rem;padding-top:1rem;border-top:1px solid #21262d}
+.comment{padding:.8rem;background:#0d1117;border-radius:6px;margin-bottom:.8rem}
+.comment-author{font-weight:600;font-size:.9rem;margin-bottom:.3rem}
+.comment-text{font-size:.9rem;color:#8b949e}
+.comment-input{width:100%;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:.8rem;color:#c9d1d9;font-family:inherit;margin-top:.8rem}
+.stats{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:1.5rem;margin-bottom:2rem}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1rem;text-align:center}
+.stat-value{font-size:2rem;font-weight:700;color:#58a6ff;margin-bottom:.3rem}
+.stat-label{font-size:.85rem;color:#8b949e}
+.empty-state{text-align:center;padding:4rem 2rem;color:#8b949e}
+.empty-icon{font-size:4rem;margin-bottom:1rem}
+.srcp-nav{display:flex;gap:12px;padding:10px 16px;background:#0d1117;border-bottom:1px solid #21262d;position:sticky;top:0;z-index:999;flex-wrap:wrap}
+.srcp-nav a{color:#58a6ff;text-decoration:none;font-weight:600;font-size:13px;padding:6px 12px;border-radius:6px;transition:background .2s}
+.srcp-nav a:hover{background:rgba(88,166,255,.12)}
+@media (max-width:768px){.container{padding:10px}.stats-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<nav class="srcp-nav">
+  <a href="./srcp-complete-explorer.html">🧭 Explorer</a>
+  <a href="./srcp-dashboard.html">📊 Dashboard</a>
+  <a href="./marketplace.html">🛒 Marketplace</a>
+  <a href="./truthrank.html">🧠 TruthRank</a>
+  <a href="./govchain.html">🏛️ GovChain</a>
+  <a href="./knowledgechain.html">📚 Knowledge</a>
+  <a href="./skillswap.html">💼 SkillSwap</a>
+  <a href="./decentralbank.html">💰 Bank</a>
+  <a href="./messenger.html">💬 Messenger</a>
+  <a href="./uyea.html">🤖 UYEA</a>
+  <a href="./public-feed.html">📱 Public Feed</a>
+</nav>
+
+<div class="container">
+<header>
+  <h1>📱 Public Feed</h1>
+  <p class="subtitle">Share images, videos, and thoughts with the decentralized network</p>
+</header>
+
+<div class="user-info">
+  <div class="user-details">
+    <div class="avatar" id="userAvatar">?</div>
+    <div>
+      <div class="username" id="username">Loading...</div>
+      <div class="did" id="userDID">Initializing...</div>
+    </div>
+  </div>
+  <button onclick="refreshFeed()" style="padding:.7rem 1.4rem;background:#30363d;border:none;border-radius:8px;color:#c9d1d9;cursor:pointer">🔄 Refresh</button>
+</div>
+
+<div class="stats" id="stats" style="display:none">
+  <div class="stats-grid">
+    <div><div class="stat-value" id="totalPosts">0</div><div class="stat-label">Total Posts</div></div>
+    <div><div class="stat-value" id="imagePosts">0</div><div class="stat-label">Images</div></div>
+    <div><div class="stat-value" id="videoPosts">0</div><div class="stat-label">Videos</div></div>
+    <div><div class="stat-value" id="totalLikes">0</div><div class="stat-label">Likes</div></div>
+    <div><div class="stat-value" id="totalComments">0</div><div class="stat-label">Comments</div></div>
+    <div><div class="stat-value" id="totalShares">0</div><div class="stat-label">Shares</div></div>
+  </div>
+</div>
+
+<div class="post-box">
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('text')">📝 Text</div>
+    <div class="tab" onclick="switchTab('image')">🖼️ Image</div>
+    <div class="tab" onclick="switchTab('video')">🎥 Video</div>
+  </div>
+
+  <div id="textTab">
+    <textarea id="textContent" class="post-input" placeholder="What's on your mind?"></textarea>
+    <button class="post-btn" onclick="postText()">📤 Post</button>
+  </div>
+
+  <div id="imageTab" style="display:none">
+    <div class="file-input-container">
+      <label for="imageFile" class="file-input-label">📁 Choose Image</label>
+      <input type="file" id="imageFile" class="file-input" accept="image/*" onchange="previewImage(this)">
+    </div>
+    <div id="imagePreview" class="file-preview"></div>
+    <textarea id="imageCaption" class="post-input" placeholder="Add a caption..." style="min-height:60px"></textarea>
+    <button class="post-btn" onclick="postImage()" id="imagePostBtn" disabled>📤 Post Image</button>
+  </div>
+
+  <div id="videoTab" style="display:none">
+    <div class="file-input-container">
+      <label for="videoFile" class="file-input-label">📁 Choose Video</label>
+      <input type="file" id="videoFile" class="file-input" accept="video/*" onchange="previewVideo(this)">
+    </div>
+    <div id="videoPreview" class="file-preview"></div>
+    <textarea id="videoCaption" class="post-input" placeholder="Add a caption..." style="min-height:60px"></textarea>
+    <button class="post-btn" onclick="postVideo()" id="videoPostBtn" disabled>📤 Post Video</button>
+  </div>
+</div>
+
+<div class="feed" id="feed">
+  <div class="empty-state">
+    <div class="empty-icon">📭</div>
+    <h3>No posts yet</h3>
+    <p>Be the first to share something!</p>
+  </div>
+</div>
+</div>
+
+<script type="module">
+import { initializeP2PInternet, getP2PInternet, resetP2PInternet } from '../src/p2p-internet.js';
+import { initializePublicFeed } from '../src/public-feed.js';
+
+let p2p, feed;
+let currentTab = 'text';
+let selectedImageFile = null;
+let selectedVideoFile = null;
+
+// Initialize
+async function init() {
+  try {
+    // Check if we need to reset (for debugging)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('reset') === 'true') {
+      resetP2PInternet();
+    }
+
+    const username = prompt('Enter your username:') || 'Anonymous';
+    
+    await initializeP2PInternet(username);
+    p2p = getP2PInternet();
+    
+    // Initialize public feed
+    feed = await initializePublicFeed(p2p);
+    
+    // Update UI
+    document.getElementById('username').textContent = p2p.identity.username;
+    document.getElementById('userDID').textContent = p2p.identity.did.substring(0, 30) + '...';
+    document.getElementById('userAvatar').textContent = p2p.identity.username[0].toUpperCase();
+    
+    // Load feed
+    loadFeed();
+    updateStats();
+    
+    // Listen for new posts
+    window.addEventListener('srcp:new-post', (event) => {
+      addPostToUI(event.detail);
+      updateStats();
+    });
+    
+    // Listen for post updates
+    window.addEventListener('srcp:post-updated', () => {
+      loadFeed();
+      updateStats();
+    });
+    
+    console.log('Public Feed ready!');
+  } catch (error) {
+    console.error('Failed to initialize:', error);
+    alert('Failed to initialize: ' + error.message + '\n\nTry adding ?reset=true to the URL to clear cached data.');
+  }
+}
+
+// Switch tab
+window.switchTab = function(tab) {
+  currentTab = tab;
+  
+  // Update tab styling
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  // Show/hide content
+  document.getElementById('textTab').style.display = tab === 'text' ? 'block' : 'none';
+  document.getElementById('imageTab').style.display = tab === 'image' ? 'block' : 'none';
+  document.getElementById('videoTab').style.display = tab === 'video' ? 'block' : 'none';
+};
+
+// Post text
+window.postText = async function() {
+  const content = document.getElementById('textContent').value.trim();
+  if (!content) {
+    alert('Please enter some text');
+    return;
+  }
+  
+  try {
+    await feed.postText(content);
+    document.getElementById('textContent').value = '';
+    loadFeed();
+    updateStats();
+  } catch (error) {
+    alert('Failed to post: ' + error.message);
+  }
+};
+
+// Preview image
+window.previewImage = function(input) {
+  const file = input.files[0];
+  if (!file) return;
+  
+  selectedImageFile = file;
+  document.getElementById('imagePostBtn').disabled = false;
+  
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    document.getElementById('imagePreview').innerHTML = 
+      `<img src="${e.target.result}" alt="Preview">`;
+  };
+  reader.readAsDataURL(file);
+};
+
+// Post image
+window.postImage = async function() {
+  if (!selectedImageFile) {
+    alert('Please select an image');
+    return;
+  }
+  
+  const caption = document.getElementById('imageCaption').value.trim();
+  
+  try {
+    await feed.postImage(selectedImageFile, caption);
+    document.getElementById('imageCaption').value = '';
+    document.getElementById('imagePreview').innerHTML = '';
+    document.getElementById('imageFile').value = '';
+    document.getElementById('imagePostBtn').disabled = true;
+    selectedImageFile = null;
+    loadFeed();
+    updateStats();
+  } catch (error) {
+    alert('Failed to post image: ' + error.message);
+  }
+};
+
+// Preview video
+window.previewVideo = function(input) {
+  const file = input.files[0];
+  if (!file) return;
+  
+  selectedVideoFile = file;
+  document.getElementById('videoPostBtn').disabled = false;
+  
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    document.getElementById('videoPreview').innerHTML = 
+      `<video controls src="${e.target.result}"></video>`;
+  };
+  reader.readAsDataURL(file);
+};
+
+// Post video
+window.postVideo = async function() {
+  if (!selectedVideoFile) {
+    alert('Please select a video');
+    return;
+  }
+  
+  const caption = document.getElementById('videoCaption').value.trim();
+  
+  try {
+    await feed.postVideo(selectedVideoFile, caption);
+    document.getElementById('videoCaption').value = '';
+    document.getElementById('videoPreview').innerHTML = '';
+    document.getElementById('videoFile').value = '';
+    document.getElementById('videoPostBtn').disabled = true;
+    selectedVideoFile = null;
+    loadFeed();
+    updateStats();
+  } catch (error) {
+    alert('Failed to post video: ' + error.message);
+  }
+};
+
+// Load feed
+function loadFeed() {
+  const posts = feed.getFeed({ limit: 100 });
+  const feedContainer = document.getElementById('feed');
+  
+  if (posts.length === 0) {
+    feedContainer.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <h3>No posts yet</h3>
+        <p>Be the first to share something!</p>
+      </div>
+    `;
+    return;
+  }
+  
+  feedContainer.innerHTML = posts.map(post => createPostHTML(post)).join('');
+}
+
+// Create post HTML
+function createPostHTML(post) {
+  const time = new Date(post.timestamp).toLocaleString();
+  const avatar = post.author.username[0].toUpperCase();
+  
+  let mediaHTML = '';
+  if (post.type === 'image' && post.media && post.media.data) {
+    mediaHTML = `<div class="post-media"><img src="${post.media.data}" alt="Post image"></div>`;
+  } else if (post.type === 'video' && post.media && post.media.data) {
+    mediaHTML = `<div class="post-media"><video controls src="${post.media.data}"></video></div>`;
+  }
+  
+  const commentsHTML = post.comments.length > 0 ? `
+    <div class="comments-section">
+      ${post.comments.map(c => `
+        <div class="comment">
+          <div class="comment-author">${c.author.username}</div>
+          <div class="comment-text">${c.text}</div>
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
+  
+  return `
+    <div class="post-card">
+      <div class="post-header">
+        <div class="post-avatar">${avatar}</div>
+        <div class="post-author-info">
+          <div class="post-author">${post.author.username}</div>
+          <div class="post-time">${time}</div>
+        </div>
+      </div>
+      ${post.content ? `<div class="post-content">${post.content}</div>` : ''}
+      ${mediaHTML}
+      <div class="post-actions">
+        <button class="action-btn" onclick="likePost('${post.id}')">
+          ❤️ <span class="action-count">${post.likes}</span>
+        </button>
+        <button class="action-btn" onclick="toggleComments('${post.id}')">
+          💬 <span class="action-count">${post.comments.length}</span>
+        </button>
+        <button class="action-btn" onclick="sharePost('${post.id}')">
+          🔄 <span class="action-count">${post.shares}</span>
+        </button>
+      </div>
+      ${commentsHTML}
+    </div>
+  `;
+}
+
+// Add new post to UI
+function addPostToUI(post) {
+  const feedContainer = document.getElementById('feed');
+  const emptyState = feedContainer.querySelector('.empty-state');
+  if (emptyState) {
+    feedContainer.innerHTML = '';
+  }
+  
+  feedContainer.insertAdjacentHTML('afterbegin', createPostHTML(post));
+}
+
+// Like post
+window.likePost = async function(postId) {
+  try {
+    await feed.likePost(postId);
+    loadFeed();
+    updateStats();
+  } catch (error) {
+    console.error('Failed to like post:', error);
+  }
+};
+
+// Share post
+window.sharePost = async function(postId) {
+  try {
+    await feed.sharePost(postId);
+    loadFeed();
+    updateStats();
+    alert('Post shared!');
+  } catch (error) {
+    console.error('Failed to share post:', error);
+  }
+};
+
+// Toggle comments (placeholder)
+window.toggleComments = function(postId) {
+  const comment = prompt('Enter your comment:');
+  if (comment) {
+    commentOnPost(postId, comment);
+  }
+};
+
+// Comment on post
+async function commentOnPost(postId, text) {
+  try {
+    await feed.commentOnPost(postId, text);
+    loadFeed();
+    updateStats();
+  } catch (error) {
+    console.error('Failed to comment:', error);
+  }
+}
+
+// Update stats
+function updateStats() {
+  const stats = feed.getStats();
+  document.getElementById('stats').style.display = 'block';
+  document.getElementById('totalPosts').textContent = stats.totalPosts;
+  document.getElementById('imagePosts').textContent = stats.imagePosts;
+  document.getElementById('videoPosts').textContent = stats.videoPosts;
+  document.getElementById('totalLikes').textContent = stats.totalLikes;
+  document.getElementById('totalComments').textContent = stats.totalComments;
+  document.getElementById('totalShares').textContent = stats.totalShares;
+}
+
+// Refresh feed
+window.refreshFeed = function() {
+  loadFeed();
+  updateStats();
+};
+
+// Initialize on load
+init();
+</script>
+</body>
+</html>

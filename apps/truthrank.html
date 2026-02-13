@@ -1,0 +1,256 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="srcp:did" content="did:srcp:app/truthrank">
+<meta name="srcp:app" content="truthrank">
+<title>TruthRank – Decentralized Fact-Checking</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:#0d1117;color:#c9d1d9;min-height:100vh;padding:16px;line-height:1.6}
+.container{max-width:1200px;margin:0 auto}
+header{background:rgba(22,27,34,.8);border:1px solid #30363d;border-radius:12px;padding:2rem;margin-bottom:2rem;backdrop-filter:blur(10px)}
+h1{font-size:2.5rem;margin-bottom:.5rem;background:linear-gradient(135deg,#58a6ff,#8a4fff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{color:#8b949e;font-size:1.1rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:1.5rem}
+.card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:1.5rem;transition:all .2s}
+.card:hover{border-color:#58a6ff;transform:translateY(-3px)}
+.card-title{font-size:1.4rem;font-weight:600;color:#58a6ff;margin-bottom:1rem}
+.claim-text{font-size:1.05rem;margin:1rem 0;color:#c9d1d9}
+.meta{display:flex;justify-content:space-between;font-size:.9rem;color:#8b949e;margin-top:1rem;flex-wrap:wrap;gap:.5rem}
+.verdict-badge{padding:.4rem .9rem;border-radius:999px;font-size:.85rem;font-weight:600}
+.verified{background:rgba(88,166,255,.15);color:#58a6ff;border:1px solid #58a6ff}
+.false{background:rgba(248,81,73,.15);color:#f85149;border:1px solid #f85149}
+.misleading{background:rgba(255,191,71,.15);color:#ffbf47;border:1px solid #ffbf47}
+.disputed{background:rgba(168,85,247,.15);color:#a855f7;border:1px solid #a855f7}
+.unverified{background:rgba(139,148,158,.15);color:#8b949e;border:1px solid #8b949e}
+.satire{background:rgba(236,72,153,.15);color:#ec4899;border:1px solid #ec4899}
+.btn{padding:.7rem 1.4rem;background:linear-gradient(135deg,#58a6ff,#8a4fff);border:none;border-radius:8px;color:#fff;font-weight:600;cursor:pointer;transition:all .2s}
+.btn:hover{transform:translateY(-2px);opacity:.92}
+.btn-vote{margin:.3rem;padding:.6rem 1.2rem;font-size:.9rem;border-radius:8px}
+.vote-verified{background:rgba(88,166,255,.18);color:#58a6ff;border:1px solid #58a6ff}
+.vote-false{background:rgba(248,81,73,.18);color:#f85149;border:1px solid #f85149}
+.vote-misleading{background:rgba(255,191,71,.18);color:#ffbf47;border:1px solid #ffbf47}
+.vote-disputed{background:rgba(168,85,247,.18);color:#a855f7;border:1px solid #a855f7}
+.vote-satire{background:rgba(236,72,153,.18);color:#ec4899;border:1px solid #ec4899}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:1000;align-items:center;justify-content:center;padding:1rem}
+.modal.active{display:flex}
+.modal-content{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:2rem;max-width:600px;width:100%;max-height:90vh;overflow-y:auto}
+.form-group{margin-bottom:1.2rem}
+label{display:block;margin-bottom:.5rem;color:#8b949e;font-size:.95rem}
+input,textarea,select{width:100%;padding:.8rem;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;font-family:inherit}
+textarea{min-height:120px;resize:vertical}
+.srcp-nav{display:flex;gap:12px;padding:10px 16px;background:#0d1117;border-bottom:1px solid #21262d;position:sticky;top:0;z-index:999;flex-wrap:wrap}
+.srcp-nav a{color:#58a6ff;text-decoration:none;font-weight:600;font-size:13px;padding:6px 12px;border-radius:6px;transition:background .2s}
+.srcp-nav a:hover{background:rgba(88,166,255,.12)}
+.status-bar{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.2rem;margin-bottom:1.5rem;display:flex;gap:2rem;flex-wrap:wrap}
+.status-item{display:flex;flex-direction:column;gap:.25rem;min-width:110px}
+.status-label{color:#8b949e;font-size:.85rem}
+.status-value{color:#58a6ff;font-weight:600;font-size:1.1rem}
+.sources-list{margin-top:1rem;font-size:.9rem}
+.sources-list a{color:#58a6ff;text-decoration:none}
+.sources-list a:hover{text-decoration:underline}
+.error-msg{color:#f85149;margin-top:.8rem;font-size:.95rem}
+@media (max-width:768px){.grid{grid-template-columns:1fr}header{padding:1.5rem}h1{font-size:2rem}}
+</style>
+
+</head>
+<body>
+    <nav class="srcp-nav">
+  <a href="./srcp-complete-explorer.html">🧭 Explorer</a>
+  <a href="./srcp-dashboard.html">📊 Dashboard</a>
+  <a href="./marketplace.html">🛒 Marketplace</a>
+  <a href="./truthrank.html">🧠 TruthRank</a>
+  <a href="./govchain.html">🏛️ GovChain</a>
+  <a href="./knowledgechain.html">📚 Knowledge</a>
+  <a href="./skillswap.html">💼 SkillSwap</a>
+  <a href="./decentralbank.html">💰 Bank</a>
+  <a href="./messenger.html">💬 Messenger</a>
+  <a href="./uyea.html">🤖 UYEA</a>
+  <a href="./complete-demo.html">🔥 Demo</a>
+  <a href="./truthrank-portal.html">🏠 Portal</a>
+  <a href="./srcp-jsonflow-platform.html">🔥 Json-Flow</a>
+  <a href="./truthrank-test-suite.html">🏠 Test</a>
+  <a href="./olSearch.html">🏠 Address-Manager</a>
+  <a href="./token-platform.html">🏠 Token</a>
+</nav>
+
+
+<div class="container">
+<header>
+  <h1>TruthRank</h1>
+  <p class="subtitle">Decentralized Fact-Checking • Community Consensus • Sovereign Verdicts</p>
+</header>
+
+<div class="status-bar">
+  <div class="status-item"><span class="status-label">User Level</span><span class="status-value" id="userLevel">-</span></div>
+  <div class="status-item"><span class="status-label">Karma</span><span class="status-value" id="userKarma">-</span></div>
+  <div class="status-item"><span class="status-label">Tokens</span><span class="status-value" id="userTokens">-</span></div>
+  <div class="status-item"><span class="status-label">Total Claims</span><span class="status-value" id="totalClaims">-</span></div>
+</div>
+
+<button class="btn" onclick="openClaimModal()" style="margin-bottom:1.5rem">Submit New Claim</button>
+<div id="claimsGrid" class="grid"></div>
+</div>
+
+<div class="modal" id="claimModal">
+  <div class="modal-content">
+    <h2 style="color:#58a6ff;margin-bottom:1.5rem">Submit Claim</h2>
+    <form id="claimForm">
+      <div class="form-group"><label>Claim Title *</label><input type="text" id="claimTitle" required></div>
+      <div class="form-group"><label>Claim Description *</label><textarea id="claimText" required></textarea></div>
+      <div class="form-group">
+        <label>Category *</label>
+        <select id="claimCategory" required>
+          <option value="" disabled selected>Select category</option>
+          <option value="politics">Politics</option>
+          <option value="science">Science</option>
+          <option value="health">Health</option>
+          <option value="technology">Technology</option>
+          <option value="economics">Economics</option>
+          <option value="environment">Environment</option>
+          <option value="social">Social Issues</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Sources (one URL per line)</label><textarea id="claimSources"></textarea></div>
+      <button type="submit" class="btn" style="width:100%">Submit Claim (5 tokens)</button>
+      <button type="button" class="btn" onclick="closeClaimModal()" style="width:100%;margin-top:.6rem;background:#30363d;color:#c9d1d9">Cancel</button>
+      <div id="formError" class="error-msg"></div>
+    </form>
+  </div>
+</div>
+
+<script>
+class SovereignEngine{constructor(identity){this.identity=identity||{username:'anonymous'};this.karma=100;this.tokens=500;this.userId=this.identity.username}static async create(username){return new SovereignEngine({username})}}
+
+const Verdict={VERIFIED:'verified',DISPUTED:'disputed',FALSE:'false',MISLEADING:'misleading',UNVERIFIED:'unverified',SATIRE:'satire'};
+const Category={POLITICS:'politics',SCIENCE:'science',HEALTH:'health',TECHNOLOGY:'technology',ECONOMICS:'economics',ENVIRONMENT:'environment',SOCIAL:'social',OTHER:'other'};
+
+class TruthRankEngine extends SovereignEngine{
+  constructor(identity){super(identity);this.claims=new Map;this.votes=new Map}
+  get level(){if(this.karma>=1000)return 5;if(this.karma>=500)return 4;if(this.karma>=200)return 3;if(this.karma>=50)return 2;return 1}
+  static async create(username){const engine=await SovereignEngine.create(username);return Object.setPrototypeOf(engine,TruthRankEngine.prototype)}
+  async submitClaim({title,text,category,sources=[]}){if(!title||!text)throw new Error('Title and text required');if(this.tokens<5)throw new Error('Insufficient tokens');const id='claim_'+Date.now();const claim={id,title,text,category:category||Category.OTHER,sources,submitter:this.userId,timestamp:Date.now(),votes:{verified:0,false:0,disputed:0,misleading:0,satire:0},consensus:{verdict:Verdict.UNVERIFIED},truthScore:0};this.claims.set(id,claim);this.tokens-=5;return claim}
+  async voteOnClaim(claimId,{verdict,confidence='medium'}){const claim=this.claims.get(claimId);if(!claim)throw new Error('Claim not found');const voteKey=this.userId+':'+claimId;if(this.votes.has(voteKey))throw new Error('Already voted');const weight=this.level*({low:.5,medium:1,high:1.5}[confidence]||1);this.votes.set(voteKey,{claimId,voter:this.userId,verdict,weight,timestamp:Date.now()});if(verdict===Verdict.VERIFIED)claim.votes.verified+=weight;else if(verdict===Verdict.FALSE)claim.votes.false+=weight;else if(verdict===Verdict.DISPUTED)claim.votes.disputed+=weight;else if(verdict===Verdict.MISLEADING)claim.votes.misleading+=weight;else if(verdict===Verdict.SATIRE)claim.votes.satire+=weight;this._updateConsensus(claim);this.karma+=5;return true}
+  _updateConsensus(claim){const total=claim.votes.verified+claim.votes.false+claim.votes.disputed+claim.votes.misleading+claim.votes.satire;if(total===0)return;const scores={verified:claim.votes.verified/total,false:claim.votes.false/total,disputed:claim.votes.disputed/total,misleading:claim.votes.misleading/total,satire:claim.votes.satire/total};const max=Math.max(scores.verified,scores.false,scores.disputed,scores.misleading,scores.satire);if(scores.verified===max)claim.consensus.verdict=Verdict.VERIFIED;else if(scores.false===max)claim.consensus.verdict=Verdict.FALSE;else if(scores.misleading===max)claim.consensus.verdict=Verdict.MISLEADING;else if(scores.satire===max)claim.consensus.verdict=Verdict.SATIRE;else claim.consensus.verdict=Verdict.DISPUTED;claim.truthScore=Math.round((scores.verified-scores.false)*100)}
+  getClaims(){return Array.from(this.claims.values()).sort((a,b)=>b.timestamp-a.timestamp)}
+}
+
+let engine=null;
+
+const VERDICT_STYLES={
+  [Verdict.VERIFIED]:{cls:'verified',label:'VERIFIED'},
+  [Verdict.FALSE]:{cls:'false',label:'FALSE'},
+  [Verdict.MISLEADING]:{cls:'misleading',label:'MISLEADING'},
+  [Verdict.DISPUTED]:{cls:'disputed',label:'DISPUTED'},
+  [Verdict.UNVERIFIED]:{cls:'unverified',label:'UNVERIFIED'},
+  [Verdict.SATIRE]:{cls:'satire',label:'SATIRE'}
+};
+
+async function init(){
+  const grid=document.getElementById('claimsGrid');
+  grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:4rem;color:#8b949e">Loading TruthRank...</div>';
+  try{
+    engine=await TruthRankEngine.create('demo-'+Date.now().toString(36));
+    engine.karma=620;engine.tokens=1000;
+    if(engine.getClaims().length===0)await loadDemoClaims();
+    renderClaims();updateStatus();
+    document.getElementById('claimForm').addEventListener('submit',handleSubmitClaim);
+  }catch(err){
+    grid.innerHTML=`<div style="color:#f85149;padding:2rem;text-align:center">Failed to start<br><small>${err.message}</small></div>`;
+  }
+}
+
+function openClaimModal(){document.getElementById('claimModal').classList.add('active')}
+function closeClaimModal(){document.getElementById('claimModal').classList.remove('active');document.getElementById('formError').textContent='';document.getElementById('claimForm').reset()}
+
+async function handleSubmitClaim(e){
+  e.preventDefault();
+  const errorEl=document.getElementById('formError');errorEl.textContent='';
+  const title=document.getElementById('claimTitle').value.trim();
+  const text=document.getElementById('claimText').value.trim();
+  const category=document.getElementById('claimCategory').value;
+  const sources=document.getElementById('claimSources').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  if(!title||!text||!category){errorEl.textContent='Please fill all required fields.';return}
+  try{
+    await engine.submitClaim({title,text,category,sources});
+    closeClaimModal();renderClaims();updateStatus();
+  }catch(err){
+    errorEl.textContent=err.message.includes('token')?'Not enough tokens (need 5)':err.message;
+  }
+}
+
+async function voteOnClaim(claimId,verdict){
+  try{await engine.voteOnClaim(claimId,{verdict,confidence:'medium'});renderClaims();updateStatus()}
+  catch(err){alert('Vote failed: '+err.message)}
+}
+
+function updateStatus(){
+  document.getElementById('userLevel').textContent=`Level ${engine.level}`;
+  document.getElementById('userKarma').textContent=engine.karma;
+  document.getElementById('userTokens').textContent=engine.tokens;
+  document.getElementById('totalClaims').textContent=engine.getClaims().length;
+}
+
+function renderClaims(){
+  const grid=document.getElementById('claimsGrid');
+  const claims=engine.getClaims();
+  if(!claims.length){
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:4rem;color:#8b949e">No claims yet — be the first.</div>';
+    return;
+  }
+  grid.innerHTML=claims.map(claim=>{
+    const cons=claim.consensus?.verdict||Verdict.UNVERIFIED;
+    const style=VERDICT_STYLES[cons]||VERDICT_STYLES[Verdict.UNVERIFIED];
+    const sourcesHtml=claim.sources?.length?`<div class="sources-list">Sources: ${claim.sources.map(s=>{try{const u=new URL(s);return `<a href="${s}" target="_blank" rel="noopener">${u.hostname}</a>`}catch{ return `<a href="${s}" target="_blank" rel="noopener">${s}</a>`}}).join(' • ')}</div>`:'';
+    return `
+      <div class="card">
+        <div class="card-title">${escapeHtml(claim.title)}</div>
+        <div class="claim-text">${escapeHtml(claim.text.substring(0,220))}${claim.text.length>220?'…':''}</div>
+        ${sourcesHtml}
+        <div class="meta">
+          <div>Category: ${claim.category}</div>
+          <div>By: ${claim.submitter.slice(0,12)}…</div>
+        </div>
+        <div style="margin:1.2rem 0 .8rem;display:flex;justify-content:space-between;align-items:center">
+          <div class="verdict-badge ${style.cls}">${style.label}</div>
+          <div style="color:#8b949e">Truth: ${claim.truthScore||0}</div>
+        </div>
+        <div style="color:#8b949e;font-size:.9rem;margin-bottom:1rem">
+          ✓ ${claim.votes.verified} | ✗ ${claim.votes.false} | ? ${claim.votes.disputed} | ⚠ ${claim.votes.misleading} | ♠ ${claim.votes.satire}
+        </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+          <button class="btn btn-vote vote-verified" onclick="voteOnClaim('${claim.id}','${Verdict.VERIFIED}')">Verified</button>
+          <button class="btn btn-vote vote-false" onclick="voteOnClaim('${claim.id}','${Verdict.FALSE}')">False</button>
+          <button class="btn btn-vote vote-misleading" onclick="voteOnClaim('${claim.id}','${Verdict.MISLEADING}')">Misleading</button>
+          <button class="btn btn-vote vote-disputed" onclick="voteOnClaim('${claim.id}','${Verdict.DISPUTED}')">Disputed</button>
+          <button class="btn btn-vote vote-satire" onclick="voteOnClaim('${claim.id}','${Verdict.SATIRE}')">Satire</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function loadDemoClaims(){
+  const demos=[
+    {title:"Moon landing was staged in a studio",text:"All Apollo footage was filmed on Earth.",category:Category.OTHER,sources:["https://en.wikipedia.org/wiki/Moon_landing_conspiracy_theories"]},
+    {title:"MMR vaccine causes autism",text:"Large studies have shown a clear link between MMR and autism.",category:Category.HEALTH,sources:["https://www.cdc.gov/vaccinesafety/concerns/autism.html"]},
+    {title:"5G towers spread COVID-19",text:"Radio waves from 5G infrastructure transmit the virus.",category:Category.TECHNOLOGY,sources:["https://www.who.int/news-room/questions-and-answers/item/coronavirus-disease-covid-19-5g-mobile-networks-and-health"]},
+    {title:"Earth is flat",text:"Water always finds level and no curvature is visible.",category:Category.SCIENCE,sources:["https://www.nasa.gov/audience/forstudents/5-8/features/nasa-knows/what-is-earth-58.html"]}
+  ];
+  for(const d of demos)await engine.submitClaim(d).catch(()=>{});
+}
+
+function escapeHtml(unsafe){
+  const div=document.createElement('div');
+  div.textContent=unsafe;
+  return div.innerHTML;
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,3362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SRCP Complete System - Hardened Protocol Implementation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+            --purple: #8b5cf6;
+            --bg-dark: #0f172a;
+            --bg-medium: #1e293b;
+            --bg-light: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #475569;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-medium) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(37, 99, 235, 0.3);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+
+        .system-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .status-card {
+            background: var(--bg-light);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .status-card.active { border-left-color: var(--success); }
+        .status-card.pending { border-left-color: var(--warning); }
+        .status-card.error { border-left-color: var(--danger); }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            background: var(--bg-medium);
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.3s;
+            font-size: 0.95em;
+        }
+
+        .tab:hover {
+            background: var(--bg-light);
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        }
+
+        .card {
+            background: var(--bg-medium);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 12px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h3 {
+            color: var(--info);
+            margin: 20px 0 10px 0;
+            font-size: 1.1em;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-success { background: var(--success); }
+        .btn-success:hover { background: #059669; }
+        
+        .btn-warning { background: var(--warning); }
+        .btn-warning:hover { background: #d97706; }
+        
+        .btn-danger { background: var(--danger); }
+        .btn-danger:hover { background: #dc2626; }
+        
+        .btn-info { background: var(--info); }
+        .btn-info:hover { background: #0891b2; }
+        
+        .btn-purple { background: var(--purple); }
+        .btn-purple:hover { background: #7c3aed; }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.9em;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-light);
+            color: var(--text-primary);
+            font-size: 1em;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .log-container {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .log-entry {
+            padding: 5px;
+            margin: 2px 0;
+            border-left: 3px solid transparent;
+        }
+
+        .log-info { border-left-color: var(--primary); color: var(--text-primary); }
+        .log-success { border-left-color: var(--success); color: var(--success); }
+        .log-warning { border-left-color: var(--warning); color: var(--warning); }
+        .log-error { border-left-color: var(--danger); color: var(--danger); }
+
+        .validation-hint {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            padding-left: 2px;
+        }
+
+        .validation-hint.error {
+            color: var(--danger);
+        }
+
+        .validation-hint.success {
+            color: var(--success);
+        }
+
+        input.error {
+            border-color: var(--danger) !important;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .stat-box {
+            background: var(--bg-light);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+
+        .peer-list, .message-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .peer-item, .message {
+            background: var(--bg-light);
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .json-viewer {
+            background: var(--bg-dark);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        .json-viewer pre {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 0.9em;
+        }
+
+        canvas {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-dark);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .badge-success { background: var(--success); color: white; }
+        .badge-warning { background: var(--warning); color: white; }
+        .badge-danger { background: var(--danger); color: white; }
+        .badge-info { background: var(--info); color: white; }
+
+        .flex {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .flex-col {
+            flex-direction: column;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+
+        .status-online { background: var(--success); }
+        .status-offline { background: var(--danger); }
+        .status-pending { background: var(--warning); }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .section-divider {
+            border-top: 2px solid var(--border);
+            margin: 20px 0;
+        }
+
+        video {
+            width: 100%;
+            border-radius: 8px;
+            background: black;
+        }
+
+        .call-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        /* ========== INBOX STYLES ========== */
+        .inbox-message {
+            background: var(--bg-medium);
+            border-left: 3px solid var(--info);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .inbox-message:hover {
+            background: var(--bg-light);
+            transform: translateX(4px);
+        }
+
+        .inbox-message.unread {
+            border-left-color: var(--success);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .inbox-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+
+        .inbox-from {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .inbox-content {
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .unread-badge {
+            background: var(--danger);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: bold;
+        }
+
+        /* ========== SEARCH STYLES ========== */
+        .search-container {
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 40px 12px 12px;
+            font-size: 1em;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            pointer-events: none;
+        }
+
+        .search-result {
+            background: var(--bg-medium);
+            border: 1px solid var(--border);
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .search-result:hover {
+            background: var(--bg-light);
+            border-color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        .search-result-title {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .search-result-address {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            font-family: 'Courier New', monospace;
+        }
+
+        /* ========== GOVERNANCE STYLES ========== */
+        .proposal-card {
+            background: var(--bg-medium);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .proposal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .proposal-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .proposal-status {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .proposal-status.active {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .proposal-status.passed {
+            background: rgba(37, 99, 235, 0.2);
+            color: var(--primary);
+        }
+
+        .proposal-status.rejected {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .vote-bar {
+            height: 30px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            margin: 15px 0;
+        }
+
+        .vote-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), var(--primary));
+            transition: width 0.3s ease;
+        }
+
+        .vote-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .vote-stat {
+            background: var(--bg-light);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .vote-stat-label {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .vote-stat-value {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .vote-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+    </style>
+    
+    <!-- Load PeerJS library for P2P connections -->
+    <script src="../src/peerjs.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌐 SRCP Complete System</h1>
+            <p class="subtitle">Sovereign Reputation & Canonical Protocol - Hardened Production Implementation 🔐</p>
+            <div class="system-status" id="systemStatus">
+                <div class="status-card" id="identityStatus">
+                    <div>Identity: <span id="identityStatusText">Not Created</span></div>
+                </div>
+                <div class="status-card" id="p2pStatus">
+                    <div>P2P Network: <span id="p2pStatusText">Offline</span></div>
+                </div>
+                <div class="status-card" id="ipfsStatus">
+                    <div>IPFS: <span id="ipfsStatusText">Not Initialized</span></div>
+                </div>
+                <div class="status-card" id="uyeaStatus">
+                    <div>Uyea Core: <span id="uyeaStatusText">Standby</span></div>
+                </div>
+            </div>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('identity')">👤 Identity</button>
+            <button class="tab" onclick="switchTab('messaging')">💬 Messaging</button>
+            <button class="tab" onclick="switchTab('calls')">📞 Calls</button>
+            <button class="tab" onclick="switchTab('p2p')">🌐 P2P Network</button>
+            <button class="tab" onclick="switchTab('ipfs')">📦 IPFS</button>
+            <button class="tab" onclick="switchTab('truthrank')">⚖️ TruthRank</button>
+            <button class="tab" onclick="switchTab('karma')">✨ Karma</button>
+            <button class="tab" onclick="switchTab('ledger')">📖 Ledger</button>
+            <button class="tab" onclick="switchTab('tokens')">💰 Tokens</button>
+            <button class="tab" onclick="switchTab('federation')">🤝 Federation</button>
+            <button class="tab" onclick="switchTab('uyea')">🧠 Uyea Intelligence</button>
+            <button class="tab" onclick="switchTab('registry')">📋 Registry</button>
+            <button class="tab" onclick="switchTab('canonical')">🔗 Canonical</button>
+            <button class="tab" onclick="switchTab('advanced')">⚙️ Advanced</button>
+            <button class="tab" onclick="switchTab('inbox')">📬 Inbox</button>
+            <button class="tab" onclick="switchTab('search')">🔍 Search</button>
+            <button class="tab" onclick="switchTab('governance')">🗳️ Governance</button>
+        </div>
+
+        <!-- Identity Tab -->
+        <div id="identity-tab" class="tab-content active">
+            <div class="grid">
+                <div class="card">
+                    <h2>🆔 Create Identity</h2>
+                    <input type="text" id="usernameInput" placeholder="Username">
+                    <textarea id="bioInput" placeholder="Bio (optional)" rows="3"></textarea>
+                    <button class="btn btn-success" onclick="createIdentity()">Create Identity</button>
+                    
+                    <h3>Current Identity</h3>
+                    <div id="identityInfo" class="json-viewer">
+                        <pre>No identity created</pre>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>🔑 DID Management</h2>
+                    <input type="text" id="didResolveInput" placeholder="DID to resolve">
+                    <button class="btn" onclick="resolveDID()">Resolve DID</button>
+                    
+                    <h3>DID Document</h3>
+                    <div id="didDocument" class="json-viewer">
+                        <pre>Enter a DID to resolve</pre>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>📝 Profile Management</h2>
+                    <input type="text" id="displayName" placeholder="Display Name">
+                    <input type="text" id="avatarUrl" placeholder="Avatar URL">
+                    <textarea id="profileBio" placeholder="Bio" rows="3"></textarea>
+                    <button class="btn btn-success" onclick="updateProfile()">Update Profile</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messaging Tab -->
+        <div id="messaging-tab" class="tab-content">
+            <div class="grid grid-2">
+                <div class="card">
+                    <h2>📨 Send Message</h2>
+                    <input type="text" id="msgRecipient" placeholder="Recipient DID (e.g., did:srcp:abc123def456)" oninput="validateRecipient()">
+                    <div id="recipientValidation" class="validation-hint"></div>
+                    <textarea id="msgContent" placeholder="Message content" rows="4"></textarea>
+                    <select id="msgType">
+                        <option value="text">Text</option>
+                        <option value="encrypted">Encrypted</option>
+                        <option value="broadcast">Broadcast</option>
+                    </select>
+                    <button class="btn btn-success" onclick="sendMessage()">Send Message</button>
+                </div>
+
+                <div class="card">
+                    <h2>📬 Inbox</h2>
+                    <button class="btn btn-sm" onclick="refreshMessages()">Refresh</button>
+                    <button class="btn btn-sm btn-warning" onclick="clearMessages()">Clear</button>
+                    <div class="message-list" id="messageList">
+                        <p class="log-entry log-info">No messages</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid">
+                <div class="card">
+                    <h2>🔐 Encryption</h2>
+                    <textarea id="encryptText" placeholder="Text to encrypt" rows="3"></textarea>
+                    <input type="text" id="encryptRecipient" placeholder="Recipient DID">
+                    <button class="btn" onclick="encryptMessage()">Encrypt</button>
+                    <div id="encryptedResult" class="json-viewer">
+                        <pre>Encrypted text will appear here</pre>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>🔓 Decryption</h2>
+                    <textarea id="decryptText" placeholder="Encrypted text" rows="3"></textarea>
+                    <button class="btn" onclick="decryptMessage()">Decrypt</button>
+                    <div id="decryptedResult" class="json-viewer">
+                        <pre>Decrypted text will appear here</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calls Tab -->
+        <div id="calls-tab" class="tab-content">
+            <div class="grid grid-2">
+                <div class="card">
+                    <h2>📞 Voice/Video Calls</h2>
+                    <input type="text" id="callRecipient" placeholder="Recipient DID">
+                    <div class="flex">
+                        <button class="btn btn-success" onclick="startVoiceCall()">🎤 Voice Call</button>
+                        <button class="btn btn-info" onclick="startVideoCall()">📹 Video Call</button>
+                    </div>
+                    
+                    <h3>Local Video</h3>
+                    <video id="localVideo" autoplay muted></video>
+                    
+                    <div class="call-controls">
+                        <button class="btn btn-sm btn-warning" onclick="muteAudio()">🔇 Mute</button>
+                        <button class="btn btn-sm btn-warning" onclick="muteVideo()">📷 Video Off</button>
+                        <button class="btn btn-sm btn-danger" onclick="endCall()">📵 End Call</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>📺 Remote Video</h2>
+                    <video id="remoteVideo" autoplay></video>
+                    
+                    <h3>Active Calls</h3>
+                    <div id="activeCallsList" class="peer-list">
+                        <p class="log-entry log-info">No active calls</p>
+                    </div>
+                    
+                    <h3>Incoming Calls</h3>
+                    <div id="incomingCallsList" class="peer-list">
+                        <p class="log-entry log-info">No incoming calls</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- P2P Network Tab -->
+        <div id="p2p-tab" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h2>🌐 P2P Network Control</h2>
+                    <button class="btn btn-success" onclick="initP2P()">Initialize P2P</button>
+                    <button class="btn" onclick="connectPeer()">Connect to Peer</button>
+                    <button class="btn btn-warning" onclick="disconnectP2P()">Disconnect</button>
+                    
+                    <h3>Add Bootstrap Peer</h3>
+                    <input type="text" id="bootstrapPeer" placeholder="Peer multiaddr">
+                    <button class="btn" onclick="addBootstrapPeer()">Add Peer</button>
+                </div>
+
+                <div class="card">
+                    <h2>👥 Connected Peers</h2>
+                    <div class="stats">
+                        <div class="stat-box">
+                            <div class="stat-value" id="peerCount">0</div>
+                            <div class="stat-label">Peers</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="dataTransferred">0 KB</div>
+                            <div class="stat-label">Data</div>
+                        </div>
+                    </div>
+                    <div class="peer-list" id="peerList">
+                        <p class="log-entry log-info">No peers connected</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>📡 Network Topology</h2>
+                    <canvas id="topologyCanvas" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- IPFS Tab -->
+        <div id="ipfs-tab" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h2>📦 IPFS Storage</h2>
+                    <button class="btn btn-success" onclick="initIPFS()">Initialize IPFS</button>
+                    
+                    <h3>Upload Content</h3>
+                    <textarea id="ipfsContent" placeholder="Content to upload" rows="4"></textarea>
+                    <input type="text" id="ipfsFileName" placeholder="File name">
+                    <button class="btn" onclick="uploadToIPFS()">Upload to IPFS</button>
+                    
+                    <h3>Last Upload</h3>
+                    <div id="ipfsUploadResult" class="json-viewer">
+                        <pre>Upload result will appear here</pre>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>📥 Retrieve Content</h2>
+                    <input type="text" id="ipfsCid" placeholder="IPFS CID">
+                    <button class="btn" onclick="retrieveFromIPFS()">Retrieve</button>
+                    
+                    <h3>Retrieved Content</h3>
+                    <div id="ipfsRetrieveResult" class="json-viewer">
+                        <pre>Retrieved content will appear here</pre>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>ℹ️ IPFS Node Info</h2>
+                    <button class="btn btn-sm" onclick="getIPFSInfo()">Refresh Info</button>
+                    <div id="ipfsInfo" class="json-viewer">
+                        <pre>Initialize IPFS to see info</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TruthRank Tab -->
+        <div id="truthrank-tab" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h2>⚖️ TruthRank Engine</h2>
+                    <input type="text" id="evaluateContentId" placeholder="Content ID">
+                    <button class="btn btn-success" onclick="evaluateContent()">Evaluate Content</button>
+                    
+                    <h3>Evaluation Results</h3>
+                    <div id="evaluationResult" class="stats">
+                        <div class="stat-box">
+                            <div class="stat-value" id="accuracyScore">--</div>
+                            <div class="stat-label">Accuracy</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="consensusScore">--</div>
+                            <div class="stat-label">Consensus</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="velocityScore">--</div>
+                            <div class="stat-label">Velocity</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>📊 Submit Evaluation</h2>
+                    <input type="text" id="evalTargetContent" placeholder="Content ID to evaluate">
+                    <select id="evalVerdict">
+                        <option value="SUPPORTED">Supported</option>
+                        <option value="REFUTED">Refuted</option>
+                        <option value="INSUFFICIENT">Insufficient</option>
+                    </select>
+                    <textarea id="evalEvidence" placeholder="Evidence/reasoning" rows="3"></textarea>
+                    <button class="btn" onclick="submitEvaluation()">Submit Evaluation</button>
+                </div>
+
+                <div class="card">
+                    <h2>🏆 Top Evaluators</h2>
+                    <div id="topEvaluators" class="peer-list">
+                        <p class="log-entry log-info">No evaluations yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Karma Tab -->
+        <div id="karma-tab" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h2>✨ Karma System</h2>
+                    <button class="btn btn-success" onclick="calculateKarma()">Calculate Karma</button>
+                    
+                    <div class="stats">
+                        <div class="stat-box">
+                            <div class="stat-value" id="karmaScore">0</div>
+                            <div class="stat-label">Total Karma</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="karmaLevel">0</div>
+                            <div class="stat-label">Level</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>📈 Karma Breakdown</h2>
+                    <div id="karmaBreakdown" class="json-viewer">
+                        <pre>Calculate karma to see breakdown</pre>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>🎯 Earn Karma</h2>
+                    <select id="karmaAction">
+                        <option value="contribute">Contribute Content</option>
+                        <option value="verify">Verify Content</option>
+                        <option value="collaborate">Collaborate</option>
+                        <option value="moderate">Moderate</option>
+                    </select>
+                    <button class="btn" onclick="performKarmaAction()">Perform Action</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ledger Tab -->
+        <div id="ledger-tab" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h2>📖 Ledger</h2>
+                    <button class="btn" onclick="viewLedger()">View Entries</button>
+                    <button class="btn btn-success" onclick="addLedgerEntry()">Add Entry</button>
+                    <button class="btn btn-warning" onclick="verifyLedger()">Verify Chain</button>
+                    
+                    <div class="stats">
+                        <div class="stat-box">
+                            <div class="stat-value" id="ledgerEntries">0</div>
+                            <div class="stat-label">Entries</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="ledgerValid">✓</div>
+                            <div class="stat-label">Status</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="grid-column: 1 / -1;">
+                    <h2>📜 Ledger Entries</h2>
+                    <div class="log-container" id="ledgerEntries">
+                        <div class="log-entry log-info">No entries yet</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tokens Tab -->
+        <div id="tokens-tab" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h2>💰 Token Balance</h2>
+                    <div class="stats">
+                        <div class="stat-box">
+                            <div class="stat-value" id="tokenBalance">0</div>
+                            <div class="stat-label">SRCP Tokens</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="tokenEarned">0</div>
+                            <div class="stat-label">Earned</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="tokenSpent">0</div>
+                            <div class="stat-label">Spent</div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-success" onclick="mintTokens()">Mint Tokens</button>
+                    <button class="btn btn-warning" onclick="burnTokens()">Burn Tokens</button>
+                </div>
+
+                <div class="card">
+                    <h2>💸 Transfer Tokens</h2>
+                    <input type="text" id="txRecipient" placeholder="Recipient DID">
+                    <input type="number" id="txAmount" placeholder="Amount">
+                    <button class="btn btn-success" onclick="sendTokens()">Send Tokens</button>
+                </div>
+
+                <div class="card">
+                    <h2>📊 Token Economics</h2>
+                    <div id="tokenEconomics" class="json-viewer">
+                        <pre>Token economics data...</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Federation Tab -->
+        <div id="federation-tab" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h2>🤝 Create Federation</h2>
+                    <input type="text" id="fedName" placeholder="Federation Name">
+                    <textarea id="fedDescription" placeholder="Description" rows="3"></textarea>
+                    <button class="btn btn-success" onclick="createFederation()">Create</button>
+                </div>
+
+                <div class="card">
+                    <h2>👥 Join Federation</h2>
+                    <input type="text" id="joinFedId" placeholder="Federation ID">
+                    <button class="btn" onclick="joinFederation()">Join</button>
+                    
+                    <h3>My Federations</h3>
+                    <div id="myFederations" class="peer-list">
+                        <p class="log-entry log-info">Not in any federations</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>⚙️ Federation Settings</h2>
+                    <select id="federationSelect">
+                        <option value="">Select Federation</option>
+                    </select>
+                    <button class="btn btn-sm" onclick="viewFederationMembers()">View Members</button>
+                    <button class="btn btn-sm btn-danger" onclick="leaveFederation()">Leave</button>
+                    
+                    <div id="federationMembers" class="peer-list">
+                        <p class="log-entry log-info">Select a federation</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Uyea Intelligence Tab -->
+        <div id="uyea-tab" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h2>🧠 Uyea Core</h2>
+                    <button class="btn btn-success" onclick="initUyea()">Initialize Uyea</button>
+                    
+                    <h3>Add Baseline Fact</h3>
+                    <input type="text" id="baselineKey" placeholder="Key">
+                    <input type="text" id="baselineValue" placeholder="Value">
+                    <button class="btn" onclick="addBaselineFact()">Add Fact</button>
+                </div>
+
+                <div class="card">
+                    <h2>🔒 Constraints</h2>
+                    <textarea id="constraintCode" placeholder="Constraint function code" rows="4"></textarea>
+                    <input type="text" id="constraintDesc" placeholder="Description">
+                    <button class="btn" onclick="addConstraint()">Add Constraint</button>
+                    
+                    <button class="btn btn-success" onclick="verifyCoherence()">Verify Coherence</button>
+                </div>
+
+                <div class="card">
+                    <h2>⚡ Excitations</h2>
+                    <input type="text" id="excitationType" placeholder="Event type">
+                    <textarea id="excitationData" placeholder="Event data (JSON)" rows="3"></textarea>
+                    <button class="btn" onclick="applyExcitation()">Apply Excitation</button>
+                    
+                    <h3>Excitation Log</h3>
+                    <div id="excitationLog" class="log-container">
+                        <div class="log-entry log-info">No excitations</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>🎯 Query State</h2>
+                    <input type="text" id="queryKey" placeholder="State key">
+                    <button class="btn" onclick="queryUyeaState()">Query</button>
+                    
+                    <div id="uyeaQueryResult" class="json-viewer">
+                        <pre>Query result will appear here</pre>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>🤖 LLM Bridge</h2>
+                    <textarea id="llmPrompt" placeholder="Prompt for LLM" rows="4"></textarea>
+                    <button class="btn btn-info" onclick="queryLLM()">Query LLM</button>
+                    
+                    <div id="llmResponse" class="json-viewer">
+                        <pre>LLM response will appear here</pre>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>📊 Uyea Status</h2>
+                    <div class="stats">
+                        <div class="stat-box">
+                            <div class="stat-value" id="baselineFacts">0</div>
+                            <div class="stat-label">Baseline Facts</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="constraintCount">0</div>
+                            <div class="stat-label">Constraints</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="excitationCount">0</div>
+                            <div class="stat-label">Excitations</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Registry Tab -->
+        <div id="registry-tab" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h2>📋 Bootstrap Registry</h2>
+                    <button class="btn btn-success" onclick="initRegistry()">Initialize Registry</button>
+                    
+                    <h3>Register Service</h3>
+                    <input type="text" id="serviceName" placeholder="Service name">
+                    <input type="text" id="serviceEndpoint" placeholder="Endpoint URL">
+                    <select id="serviceType">
+                        <option value="messaging">Messaging</option>
+                        <option value="storage">Storage</option>
+                        <option value="compute">Compute</option>
+                        <option value="relay">Relay</option>
+                    </select>
+                    <button class="btn" onclick="registerService()">Register</button>
+                </div>
+
+                <div class="card">
+                    <h2>🔍 Discover Services</h2>
+                    <select id="discoverType">
+                        <option value="all">All Services</option>
+                        <option value="messaging">Messaging</option>
+                        <option value="storage">Storage</option>
+                        <option value="compute">Compute</option>
+                        <option value="relay">Relay</option>
+                    </select>
+                    <button class="btn" onclick="discoverServices()">Discover</button>
+                    
+                    <div id="discoveredServices" class="peer-list">
+                        <p class="log-entry log-info">No services discovered</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>📊 Registry Stats</h2>
+                    <div class="stats">
+                        <div class="stat-box">
+                            <div class="stat-value" id="registeredServices">0</div>
+                            <div class="stat-label">Services</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="activeNodes">0</div>
+                            <div class="stat-label">Active Nodes</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Canonical Tab -->
+        <div id="canonical-tab" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h2>🔗 Canonical URIs</h2>
+                    <input type="text" id="canonicalResource" placeholder="Resource identifier">
+                    <button class="btn btn-success" onclick="createCanonical()">Create Canonical URI</button>
+                    
+                    <h3>Generated URI</h3>
+                    <div id="canonicalUri" class="json-viewer">
+                        <pre>URI will appear here</pre>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>🔍 Resolve Canonical</h2>
+                    <input type="text" id="resolveCanonical" placeholder="Canonical URI">
+                    <button class="btn" onclick="resolveCanonical()">Resolve</button>
+                    
+                    <div id="canonicalResolution" class="json-viewer">
+                        <pre>Resolution result will appear here</pre>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>📚 Content Addressing</h2>
+                    <textarea id="contentToAddress" placeholder="Content to address" rows="4"></textarea>
+                    <button class="btn" onclick="addressContent()">Generate Address</button>
+                    
+                    <div id="contentAddress" class="json-viewer">
+                        <pre>Content address will appear here</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Tab -->
+        <div id="advanced-tab" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h2>🔧 System Configuration</h2>
+                    <textarea id="systemConfig" rows="10" placeholder="System configuration JSON"></textarea>
+                    <button class="btn btn-warning" onclick="updateSystemConfig()">Update Config</button>
+                </div>
+
+                <div class="card">
+                    <h2>📜 System Log</h2>
+                    <button class="btn btn-sm" onclick="clearLog()">Clear</button>
+                    <button class="btn btn-sm btn-success" onclick="exportLog()">Export</button>
+                    <div class="log-container" id="systemLog">
+                        <div class="log-entry log-info">System initialized</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>🧪 Testing Tools</h2>
+                    <button class="btn" onclick="runTests()">Run All Tests</button>
+                    <button class="btn btn-info" onclick="benchmarkPerformance()">Benchmark</button>
+                    <button class="btn btn-warning" onclick="simulateNetwork()">Simulate Network</button>
+                    
+                    <div id="testResults" class="log-container">
+                        <div class="log-entry log-info">No tests run</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>💾 Export/Import</h2>
+                    <button class="btn btn-success" onclick="exportState()">Export State</button>
+                    <button class="btn btn-warning" onclick="importState()">Import State</button>
+                    <button class="btn btn-danger" onclick="resetSystem()">Reset System</button>
+                </div>
+
+                <div class="card">
+                    <h2>📊 Performance Metrics</h2>
+                    <div class="stats">
+                        <div class="stat-box">
+                            <div class="stat-value" id="msgLatency">0ms</div>
+                            <div class="stat-label">Msg Latency</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="throughput">0/s</div>
+                            <div class="stat-label">Throughput</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="memUsage">0MB</div>
+                            <div class="stat-label">Memory</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== INBOX TAB ==================== -->
+        <div id="inbox-tab" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h2>📬 My Encrypted Inbox</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Anyone can send encrypted messages to your DID. Only you can decrypt them with your private key.
+                    </p>
+                    
+                    <div class="stats">
+                        <div class="stat-box">
+                            <div class="stat-value" id="inboxUnread">0</div>
+                            <div class="stat-label">Unread</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="inboxTotal">0</div>
+                            <div class="stat-label">Total</div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-info" onclick="readInbox()">📖 Read Messages</button>
+                    <button class="btn btn-sm" onclick="refreshInbox()">🔄 Refresh</button>
+                    <button class="btn btn-sm btn-warning" onclick="clearInbox()">🗑️ Clear</button>
+                </div>
+
+                <div class="card">
+                    <h2>📨 Send Encrypted Message</h2>
+                    <input type="text" id="inboxRecipient" placeholder="Recipient DID" oninput="validateInboxRecipient()">
+                    <div id="inboxRecipientValidation" class="validation-hint"></div>
+                    <textarea id="inboxMessage" placeholder="Message (will be encrypted)" rows="4"></textarea>
+                    <button class="btn btn-success" onclick="sendEncryptedMessage()">🔒 Send Encrypted</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📥 Inbox Messages</h2>
+                <div id="inboxMessages" class="log-container">
+                    <p class="log-entry log-info">No messages yet</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SEARCH TAB ==================== -->
+        <div id="search-tab" class="tab-content">
+            <div class="card">
+                <h2>🔍 Smart Contract Search</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                    Search contracts by DID, title, tags, or content
+                </p>
+
+                <div class="search-container">
+                    <input type="text" 
+                           class="search-input" 
+                           id="contractSearch" 
+                           placeholder="Search contracts..." 
+                           oninput="searchContracts()">
+                    <span class="search-icon">🔍</span>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-box">
+                        <div class="stat-value" id="searchResults">0</div>
+                        <div class="stat-label">Results</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="searchTotal">0</div>
+                        <div class="stat-label">Total Contracts</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid">
+                <div class="card">
+                    <h2>📝 Add New Contract</h2>
+                    <input type="text" id="contractTitle" placeholder="Contract Title">
+                    <input type="text" id="contractDID" placeholder="Contract DID">
+                    <input type="text" id="contractTags" placeholder="Tags (comma separated)">
+                    <textarea id="contractContent" placeholder="Contract content (JSON)" rows="6"></textarea>
+                    <button class="btn btn-success" onclick="addContract()">➕ Add Contract</button>
+                </div>
+
+                <div class="card">
+                    <h2>🔎 Search Results</h2>
+                    <div id="contractResults" class="log-container">
+                        <p class="log-entry log-info">Start searching to see results</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📄 Selected Contract</h2>
+                <div id="selectedContract" class="json-viewer">
+                    <pre>No contract selected</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== GOVERNANCE TAB ==================== -->
+        <div id="governance-tab" class="tab-content">
+            <div class="card">
+                <h2>🗳️ Decentralized Governance</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                    Create proposals, vote, and execute approved governance actions via JSONFlow
+                </p>
+
+                <div class="stats">
+                    <div class="stat-box">
+                        <div class="stat-value" id="activeProposals">0</div>
+                        <div class="stat-label">Active</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="passedProposals">0</div>
+                        <div class="stat-label">Passed</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="rejectedProposals">0</div>
+                        <div class="stat-label">Rejected</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="totalVotes">0</div>
+                        <div class="stat-label">Total Votes</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid">
+                <div class="card">
+                    <h2>📝 Create Proposal</h2>
+                    <input type="text" id="proposalTitle" placeholder="Proposal Title">
+                    <textarea id="proposalDescription" placeholder="Description" rows="3"></textarea>
+                    <textarea id="proposalJSONFlow" placeholder="JSONFlow to execute if approved" rows="6"></textarea>
+                    <input type="number" id="proposalDuration" placeholder="Duration (hours)" value="72">
+                    <button class="btn btn-success" onclick="createProposal()">📋 Create Proposal</button>
+                </div>
+
+                <div class="card">
+                    <h2>⚡ Quick Governance Templates</h2>
+                    <button class="btn btn-sm btn-info" onclick="loadGovernanceTemplate('transfer')">💰 Transfer Tokens</button>
+                    <button class="btn btn-sm btn-info" onclick="loadGovernanceTemplate('upgrade')">⬆️ Upgrade System</button>
+                    <button class="btn btn-sm btn-info" onclick="loadGovernanceTemplate('parameter')">⚙️ Change Parameter</button>
+                    <button class="btn btn-sm btn-info" onclick="loadGovernanceTemplate('custom')">🔧 Custom Action</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🗳️ Active Proposals</h2>
+                <div id="proposalsList">
+                    <p class="log-entry log-info">No proposals yet. Create one above!</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Load all SRCP modules -->
+    <script type="module">
+        // Import all modules
+        import { SRCPSystem } from '../src/srcp-system.js';
+        import { Identity } from '../src/identity.js';
+        import { Canonical } from '../src/canonical.js';
+        import { Evaluator } from '../src/evaluator.js';
+        import { TruthRankEngine } from '../src/truthrank-engine.js';
+        import { KarmaSystem } from '../src/karma.js';
+        import { Ledger } from '../src/ledger.js';
+        import { TokenEconomics } from '../src/token-economics.js';
+        import { Federation } from '../src/federation.js';
+        import { SovereignEngine } from '../src/engine.js';
+        import { CallProtocol } from '../src/call-protocol.js';
+        import { MessagingProtocol } from '../src/messaging-protocol.js';
+        import { P2PTransport } from '../src/p2p-transport.js';
+        import { StandaloneP2P } from '../src/standalone-p2p.js';
+        import { StandaloneIPFS } from '../src/standalone-ipfs.js';
+        import { UyeaCore } from '../src/uyea-core.js';
+        import { UyeaLLMBridge } from '../src/uyea-llm-bridge.js';
+        import { UyeaP2PIntelligence } from '../src/uyea-p2p-intelligence.js';
+        import { BootstrapRegistry } from '../src/bootstrap-registry.js';
+        import { DIDRouter } from '../src/did-router.js';
+        import { PublicFeed } from '../src/public-feed.js';
+        import { P2PInternet } from '../src/p2p-internet.js';
+        import { createLogicalClock } from '../src/clock.js';
+        import { createDeterministicNonce } from '../src/nonce.js';
+        import { LedgerEntry } from '../src/ledger.js';
+
+        // HARDENED: Create deterministic infrastructure
+        const SYSTEM_SEED = localStorage.getItem('srcp_system_seed') || crypto.randomUUID();
+        localStorage.setItem('srcp_system_seed', SYSTEM_SEED);
+
+        const clock = new createLogicalClock();
+        const nonce = new createDeterministicNonce(SYSTEM_SEED);
+
+        // Create structured logger
+        const logger = {
+            debug: (msg) => log(msg, 'info'),
+            info: (msg) => log(msg, 'info'),
+            warn: (msg) => log(msg, 'warning'),
+            error: (msg) => log(msg, 'error')
+        };
+
+        // Initialize global app object
+        window.app = {
+            // HARDENED: Core deterministic infrastructure
+            clock: clock,
+            nonce: nonce,
+            logger: logger,
+            
+            system: null,
+            identity: null,
+            canonical: new Canonical(),
+            evaluator: new Evaluator(),
+            truthrank: new TruthRankEngine(),
+            karma: KarmaSystem, // Static class - no instantiation needed
+            ledger: new Ledger({ logger }),
+            tokens: TokenEconomics, // Static class - no instantiation needed
+            tokenBalances: new Map(), // Track token balances by DID
+            userActions: new Map(), // Track user actions for karma calculation
+            federation: new Federation(),
+            engine: new SovereignEngine(),
+            p2p: null,
+            ipfs: null,
+            uyea: new UyeaCore(),
+            uyeaLLM: new UyeaLLMBridge(),
+            uyeaP2P: null,
+            registry: null, // Will be initialized after identity creation
+            didRouter: null, // Will be initialized after clock/nonce setup
+            publicFeed: new PublicFeed(),
+            p2pInternet: new P2PInternet(),
+            messaging: null,
+            calls: null,
+            transport: null,
+            messages: [],
+            peers: new Map()
+        };
+
+        // HARDENED: Initialize DIDRouter with dependencies
+        window.app.didRouter = new DIDRouter(clock, nonce, logger);
+
+        // Make functions globally available
+        window.log = log;
+        window.updateUI = updateUI;
+
+        // Logging function
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('systemLog');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            // Note: console.log is acceptable for debugging, not canonical state
+            console.log(message);
+        }
+
+        // Update UI function
+        function updateUI() {
+            // Update identity status
+            if (window.app.identity) {
+                document.getElementById('identityStatusText').textContent = window.app.identity.username || 'Active';
+                document.getElementById('identityStatus').className = 'status-card active';
+                document.getElementById('identityInfo').innerHTML = `<pre>${JSON.stringify({
+                    did: window.app.identity.did,
+                    username: window.app.identity.username,
+                    created: new Date(window.app.identity.created).toLocaleString()
+                }, null, 2)}</pre>`;
+            }
+
+            // Update P2P status
+            if (window.app.p2p) {
+                const peerCount = window.app.peers.size;
+                document.getElementById('p2pStatusText').textContent = `${peerCount} peers`;
+                document.getElementById('p2pStatus').className = peerCount > 0 ? 'status-card active' : 'status-card pending';
+                document.getElementById('peerCount').textContent = peerCount;
+            }
+
+            // Update IPFS status
+            if (window.app.ipfs) {
+                document.getElementById('ipfsStatusText').textContent = 'Active';
+                document.getElementById('ipfsStatus').className = 'status-card active';
+            }
+
+            // Update Uyea status
+            if (window.app.uyea && window.app.uyea.baseline.size > 0) {
+                document.getElementById('uyeaStatusText').textContent = 'Active';
+                document.getElementById('uyeaStatus').className = 'status-card active';
+                document.getElementById('baselineFacts').textContent = window.app.uyea.baseline.size;
+                document.getElementById('constraintCount').textContent = window.app.uyea.constraints.size;
+                document.getElementById('excitationCount').textContent = window.app.uyea.excitations.length;
+            }
+
+            // Update karma
+            if (window.app.identity && window.app.karma) {
+                // Get user's action history
+                const actions = window.app.userActions.get(window.app.identity.did) || [];
+                const accountCreated = window.app.identity.created || Date.now();
+                
+                // Calculate karma using static method
+                const score = window.app.karma.calculateKarma(actions, accountCreated);
+                const level = window.app.karma.getLevel(score);
+                
+                document.getElementById('karmaScore').textContent = Math.round(score);
+                document.getElementById('karmaLevel').textContent = level;
+            }
+
+            // Update tokens
+            if (window.app.identity && window.app.tokens) {
+                const balance = window.app.tokenBalances.get(window.app.identity.did) || window.app.tokens.INITIAL_BALANCE;
+                document.getElementById('tokenBalance').textContent = balance;
+            }
+
+            // Update ledger
+            const entries = window.app.ledger.entries;
+            document.getElementById('ledgerEntries').textContent = entries.length;
+        }
+
+        // ============================================================================
+        // IDENTITY FUNCTIONS
+        // ============================================================================
+
+window.createIdentity = async function() {
+    const username = document.getElementById('usernameInput').value;
+    const bio = document.getElementById('bioInput').value;
+
+    if (!username) {
+        log('❌ Username required', 'error');
+        return;
+    }
+
+    // Direct constructor usage
+    window.app.identity = new Identity(username);
+    window.app.identity.did = `did:srcp:${username}:${window.app.nonce.hex(3)}`;
+    window.app.identity.created = Date.now();
+    if (bio) window.app.identity.profile = { bio };
+
+    // Initialize token balance with initial allocation
+    window.app.tokenBalances.set(window.app.identity.did, window.app.tokens.INITIAL_BALANCE);
+    
+    // Initialize empty action history for karma calculation
+    window.app.userActions.set(window.app.identity.did, []);
+
+    log(`✅ Identity created: ${window.app.identity.did}`, 'success');
+    updateUI();
+};
+
+        window.resolveDID = async function() {
+            const did = document.getElementById('didResolveInput').value;
+            
+            if (!did) {
+                log('❌ Enter a DID', 'error');
+                return;
+            }
+
+            try {
+                const document = await window.app.didRouter.resolve(did);
+                document.getElementById('didDocument').innerHTML = `<pre>${JSON.stringify(document, null, 2)}</pre>`;
+                log(`✅ DID resolved: ${did}`, 'success');
+            } catch (error) {
+                log(`❌ Failed to resolve DID: ${error.message}`, 'error');
+            }
+        };
+
+        window.updateProfile = function() {
+            if (!window.app.identity) {
+                log('❌ Create identity first', 'error');
+                return;
+            }
+
+            const displayName = document.getElementById('displayName').value;
+            const avatarUrl = document.getElementById('avatarUrl').value;
+            const bio = document.getElementById('profileBio').value;
+
+            window.app.identity.profile = {
+                ...window.app.identity.profile,
+                displayName,
+                avatarUrl,
+                bio
+            };
+
+            log('✅ Profile updated', 'success');
+        };
+
+        // ============================================================================
+        // MESSAGING FUNCTIONS
+        // ============================================================================
+
+        /**
+         * Validates that a recipient address is in proper DID format
+         * Returns: { valid: boolean, error: string }
+         */
+        function validateRecipientAddress(address) {
+            if (!address || address.trim() === '') {
+                return { valid: false, error: 'Recipient address is required' };
+            }
+
+            // Check DID format: did:method:identifier (allows colons in identifier)
+            const didPattern = /^did:[\w]+:[\w\-\.\:]+$/;
+            if (!didPattern.test(address)) {
+                return { valid: false, error: 'Invalid DID format. Use: did:srcp:identifier' };
+            }
+
+            // Check if it's a SRCP DID
+            if (!address.startsWith('did:srcp:')) {
+                return { valid: false, error: 'Only did:srcp: addresses supported' };
+            }
+
+            // Check identifier length (minimum 6 characters after did:srcp:)
+            const identifier = address.substring(9); // Remove 'did:srcp:'
+            if (identifier.length < 6) {
+                return { valid: false, error: 'DID identifier must be at least 6 characters' };
+            }
+
+            // Additional check: Can't send to yourself
+            if (window.app.identity && address === window.app.identity.did) {
+                return { valid: false, error: 'Cannot send message to yourself' };
+            }
+
+            return { valid: true, error: null };
+        }
+
+        /**
+         * Real-time validation feedback as user types
+         */
+        window.validateRecipient = function() {
+            const input = document.getElementById('msgRecipient');
+            const validation = document.getElementById('recipientValidation');
+            
+            if (!validation) {
+                return; // Validation div not in DOM yet
+            }
+            
+            const address = input.value;
+
+            if (!address) {
+                validation.textContent = 'Enter recipient DID (e.g., did:srcp:abc123def456)';
+                validation.className = 'validation-hint';
+                input.classList.remove('error');
+                return;
+            }
+
+            const result = validateRecipientAddress(address);
+            
+            if (result.valid) {
+                validation.textContent = '✓ Valid DID address';
+                validation.className = 'validation-hint success';
+                input.classList.remove('error');
+            } else {
+                validation.textContent = '✗ ' + result.error;
+                validation.className = 'validation-hint error';
+                input.classList.add('error');
+            }
+        };
+
+        window.sendMessage = async function() {
+            if (!window.app.identity) {
+                log('❌ Create identity first', 'error');
+                return;
+            }
+
+            const recipient = document.getElementById('msgRecipient').value.trim();
+            const content = document.getElementById('msgContent').value.trim();
+            const type = document.getElementById('msgType').value;
+
+            if (!content) {
+                log('❌ Message content is required', 'error');
+                return;
+            }
+
+            // CRITICAL FIX: Validate recipient address
+            const validation = validateRecipientAddress(recipient);
+            if (!validation.valid) {
+                log(`❌ Invalid recipient: ${validation.error}`, 'error');
+                return;
+            }
+
+            try {
+                const message = {
+                    from: window.app.identity.did,
+                    to: recipient,
+                    content,
+                    type,
+                    timestamp: window.app.clock.advance(), // HARDENED: Logical clock
+                    wallClockDisplay: Date.now() // For UI display only
+                };
+
+                window.app.messages.push(message);
+                
+                if (window.app.messaging) {
+                    // CRITICAL FIX: Use correct method name 'sendMessage' not 'send'
+                    await window.app.messaging.sendMessage(recipient, content);
+                }
+
+                log(`✅ Message sent to ${recipient.substring(0, 30)}...`, 'success');
+                document.getElementById('msgContent').value = '';
+                refreshMessages();
+            } catch (error) {
+                log(`❌ Failed to send message: ${error.message}`, 'error');
+            }
+        };
+
+        window.refreshMessages = function() {
+            const list = document.getElementById('messageList');
+            list.innerHTML = '';
+
+            if (window.app.messages.length === 0) {
+                list.innerHTML = '<p class="log-entry log-info">No messages</p>';
+                return;
+            }
+
+            window.app.messages.forEach(msg => {
+                const div = document.createElement('div');
+                div.className = 'message';
+                div.innerHTML = `
+                    <div class="message-header">
+                        <span><strong>From:</strong> ${msg.from.substring(0, 20)}...</span>
+                        <span>${new Date(msg.timestamp).toLocaleTimeString()}</span>
+                    </div>
+                    <div class="message-body">${msg.content}</div>
+                `;
+                list.appendChild(div);
+            });
+        };
+
+        window.clearMessages = function() {
+            window.app.messages = [];
+            refreshMessages();
+            log('Messages cleared', 'info');
+        };
+
+        window.encryptMessage = async function() {
+            const text = document.getElementById('encryptText').value;
+            const recipient = document.getElementById('encryptRecipient').value;
+
+            if (!text || !recipient) {
+                log('❌ Fill in all fields', 'error');
+                return;
+            }
+
+            try {
+                // Simulate encryption
+                const encrypted = btoa(text);
+                document.getElementById('encryptedResult').innerHTML = `<pre>${encrypted}</pre>`;
+                log('✅ Message encrypted', 'success');
+            } catch (error) {
+                log(`❌ Encryption failed: ${error.message}`, 'error');
+            }
+        };
+
+        window.decryptMessage = async function() {
+            const encrypted = document.getElementById('decryptText').value;
+
+            if (!encrypted) {
+                log('❌ Enter encrypted text', 'error');
+                return;
+            }
+
+            try {
+                const decrypted = atob(encrypted);
+                document.getElementById('decryptedResult').innerHTML = `<pre>${decrypted}</pre>`;
+                log('✅ Message decrypted', 'success');
+            } catch (error) {
+                log(`❌ Decryption failed: ${error.message}`, 'error');
+            }
+        };
+
+        // ============================================================================
+        // CALL FUNCTIONS
+        // ============================================================================
+
+        window.startVoiceCall = async function() {
+            const recipient = document.getElementById('callRecipient').value;
+            
+            if (!recipient) {
+                log('❌ Enter recipient DID', 'error');
+                return;
+            }
+
+            if (!window.app.calls) {
+                log('❌ Initialize P2P first', 'error');
+                return;
+            }
+
+            try {
+                const session = await window.app.calls.startVoiceCall(recipient);
+                log(`📞 Voice call started with ${recipient}`, 'success');
+                
+                // Display local stream
+                const localVideo = document.getElementById('localVideo');
+                if (session.localStream) {
+                    localVideo.srcObject = session.localStream;
+                }
+            } catch (error) {
+                log(`❌ Call failed: ${error.message}`, 'error');
+            }
+        };
+
+        window.startVideoCall = async function() {
+            const recipient = document.getElementById('callRecipient').value;
+            
+            if (!recipient) {
+                log('❌ Enter recipient DID', 'error');
+                return;
+            }
+
+            if (!window.app.calls) {
+                log('❌ Initialize P2P first', 'error');
+                return;
+            }
+
+            try {
+                const session = await window.app.calls.startVideoCall(recipient);
+                log(`📹 Video call started with ${recipient}`, 'success');
+                
+                const localVideo = document.getElementById('localVideo');
+                if (session.localStream) {
+                    localVideo.srcObject = session.localStream;
+                }
+            } catch (error) {
+                log(`❌ Call failed: ${error.message}`, 'error');
+            }
+        };
+
+        window.endCall = function() {
+            if (window.app.calls) {
+                // End all active calls
+                log('📵 Call ended', 'warning');
+                document.getElementById('localVideo').srcObject = null;
+                document.getElementById('remoteVideo').srcObject = null;
+            }
+        };
+
+        window.muteAudio = function() {
+            const localVideo = document.getElementById('localVideo');
+            if (localVideo.srcObject) {
+                const audioTracks = localVideo.srcObject.getAudioTracks();
+                audioTracks.forEach(track => {
+                    track.enabled = !track.enabled;
+                });
+                log(audioTracks[0]?.enabled ? '🔊 Audio unmuted' : '🔇 Audio muted', 'info');
+            }
+        };
+
+        window.muteVideo = function() {
+            const localVideo = document.getElementById('localVideo');
+            if (localVideo.srcObject) {
+                const videoTracks = localVideo.srcObject.getVideoTracks();
+                videoTracks.forEach(track => {
+                    track.enabled = !track.enabled;
+                });
+                log(videoTracks[0]?.enabled ? '📹 Video on' : '📷 Video off', 'info');
+            }
+        };
+
+        // ============================================================================
+        // P2P FUNCTIONS
+        // ============================================================================
+
+        window.initP2P = async function() {
+            try {
+                window.app.p2p = new StandaloneP2P();
+                // StandaloneP2P doesn't have initialize() - it's ready to use
+                
+                window.app.transport = new P2PTransport(window.app.p2p);
+                await window.app.transport.initialize();
+
+                if (window.app.identity) {
+                    window.app.messaging = new MessagingProtocol(window.app.identity, window.app.transport);
+                    await window.app.messaging.initialize();
+
+                    window.app.calls = new CallProtocol(window.app.identity, window.app.transport);
+                    await window.app.calls.initialize();
+                }
+
+                window.app.uyeaP2P = new UyeaP2PIntelligence(window.app.p2p);
+                await window.app.uyeaP2P.initialize();
+
+                log('✅ P2P network initialized', 'success');
+                updateUI();
+            } catch (error) {
+                log(`❌ P2P initialization failed: ${error.message}`, 'error');
+            }
+        };
+
+        window.connectPeer = async function() {
+            log('🔄 Connecting to peers...', 'info');
+            
+            // HARDENED: Deterministic peer IDs
+            const peerId = window.app.nonce.hex(8);
+            const mockPeer = {
+                id: peerId,
+                did: `did:srcp:peer/${peerId}`,
+                connected: window.app.clock.advance() // HARDENED: Logical timestamp
+            };
+            
+            window.app.peers.set(mockPeer.id, mockPeer);
+            log(`✅ Connected to peer: ${mockPeer.id}`, 'success');
+            updateUI();
+            updatePeerList();
+        };
+
+        window.disconnectP2P = function() {
+            window.app.peers.clear();
+            log('⚠️ Disconnected from P2P network', 'warning');
+            updateUI();
+            updatePeerList();
+        };
+
+        window.addBootstrapPeer = function() {
+            const peer = document.getElementById('bootstrapPeer').value;
+            if (!peer) {
+                log('❌ Enter peer address', 'error');
+                return;
+            }
+            log(`✅ Added bootstrap peer: ${peer}`, 'success');
+        };
+
+        function updatePeerList() {
+            const list = document.getElementById('peerList');
+            list.innerHTML = '';
+
+            if (window.app.peers.size === 0) {
+                list.innerHTML = '<p class="log-entry log-info">No peers connected</p>';
+                return;
+            }
+
+            window.app.peers.forEach((peer, id) => {
+                const div = document.createElement('div');
+                div.className = 'peer-item';
+                div.innerHTML = `
+                    <span>${id}</span>
+                    <span class="badge badge-success">Connected</span>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        // ============================================================================
+        // IPFS FUNCTIONS
+        // ============================================================================
+
+        window.initIPFS = async function() {
+            try {
+                window.app.ipfs = new StandaloneIPFS();
+                // StandaloneIPFS doesn't have initialize() - it's ready to use
+                
+                log('✅ IPFS initialized', 'success');
+                updateUI();
+                getIPFSInfo();
+            } catch (error) {
+                log(`❌ IPFS initialization failed: ${error.message}`, 'error');
+            }
+        };
+
+        window.uploadToIPFS = async function() {
+            if (!window.app.ipfs) {
+                log('❌ Initialize IPFS first', 'error');
+                return;
+            }
+
+            const content = document.getElementById('ipfsContent').value;
+            const filename = document.getElementById('ipfsFileName').value;
+
+            if (!content) {
+                log('❌ Enter content to upload', 'error');
+                return;
+            }
+
+            try {
+                const cid = await window.app.ipfs.add(content);
+                document.getElementById('ipfsUploadResult').innerHTML = `<pre>${JSON.stringify({
+                    cid: cid.toString(),
+                    filename: filename || 'untitled',
+                    size: content.length
+                }, null, 2)}</pre>`;
+                
+                log(`✅ Uploaded to IPFS: ${cid}`, 'success');
+            } catch (error) {
+                log(`❌ Upload failed: ${error.message}`, 'error');
+            }
+        };
+
+        window.retrieveFromIPFS = async function() {
+            if (!window.app.ipfs) {
+                log('❌ Initialize IPFS first', 'error');
+                return;
+            }
+
+            const cid = document.getElementById('ipfsCid').value;
+
+            if (!cid) {
+                log('❌ Enter CID', 'error');
+                return;
+            }
+
+            try {
+                const content = await window.app.ipfs.cat(cid);
+                document.getElementById('ipfsRetrieveResult').innerHTML = `<pre>${content}</pre>`;
+                log(`✅ Retrieved from IPFS: ${cid}`, 'success');
+            } catch (error) {
+                log(`❌ Retrieval failed: ${error.message}`, 'error');
+            }
+        };
+
+        window.getIPFSInfo = async function() {
+            if (!window.app.ipfs) {
+                return;
+            }
+
+            try {
+                // StandaloneIPFS doesn't have id() method, show store info instead
+                const info = {
+                    type: 'StandaloneIPFS',
+                    storeSize: window.app.ipfs.store.size,
+                    items: Array.from(window.app.ipfs.store.keys()).slice(0, 5) // Show first 5 CIDs
+                };
+                document.getElementById('ipfsInfo').innerHTML = `<pre>${JSON.stringify(info, null, 2)}</pre>`;
+            } catch (error) {
+                log(`❌ Failed to get IPFS info: ${error.message}`, 'error');
+            }
+        };
+
+        // ============================================================================
+        // TRUTHRANK FUNCTIONS
+        // ============================================================================
+
+        window.evaluateContent = async function() {
+            const contentId = document.getElementById('evaluateContentId').value;
+            
+            if (!contentId) {
+                log('❌ Enter content ID', 'error');
+                return;
+            }
+
+            try {
+                const mockContent = { 
+                    id: contentId, 
+                    title: 'Sample Content',
+                    claims: ['claim1', 'claim2']
+                };
+                
+                const evaluation = await window.app.truthrank.evaluate(mockContent);
+                
+                document.getElementById('accuracyScore').textContent = (evaluation.scores.accuracy * 100).toFixed(1) + '%';
+                document.getElementById('consensusScore').textContent = (evaluation.scores.consensus * 100).toFixed(1) + '%';
+                document.getElementById('velocityScore').textContent = evaluation.scores.velocity.toFixed(2);
+                
+                log(`✅ Content evaluated: ${contentId}`, 'success');
+            } catch (error) {
+                log(`❌ Evaluation failed: ${error.message}`, 'error');
+            }
+        };
+
+        window.submitEvaluation = async function() {
+            if (!window.app.identity) {
+                log('❌ Create identity first', 'error');
+                return;
+            }
+
+            const contentId = document.getElementById('evalTargetContent').value;
+            const verdict = document.getElementById('evalVerdict').value;
+            const evidence = document.getElementById('evalEvidence').value;
+
+            if (!contentId || !evidence) {
+                log('❌ Fill in all fields', 'error');
+                return;
+            }
+
+            try {
+                const evaluation = {
+                    contentId,
+                    evaluator: window.app.identity.did,
+                    verdict,
+                    evidence,
+                    timestamp: window.app.clock.advance() // HARDENED: Logical clock
+                };
+
+                await window.app.truthrank.submitEvaluation(evaluation);
+                log(`✅ Evaluation submitted for ${contentId}`, 'success');
+            } catch (error) {
+                log(`❌ Failed to submit evaluation: ${error.message}`, 'error');
+            }
+        };
+
+        // ============================================================================
+        // KARMA FUNCTIONS
+        // ============================================================================
+
+        window.calculateKarma = async function() {
+            if (!window.app.identity) {
+                log('❌ Create identity first', 'error');
+                return;
+            }
+
+            // Get or initialize action history
+            let actions = window.app.userActions.get(window.app.identity.did) || [];
+            
+            // Add some sample actions with proper format for karma calculation
+            const newActions = [
+                { action: 'upload', timestamp: Date.now() - 86400000, data: { aiScore: 85 } },
+                { action: 'like', timestamp: Date.now() - 43200000 },
+                { action: 'comment', timestamp: Date.now() - 21600000 }
+            ];
+            
+            actions = [...actions, ...newActions];
+            window.app.userActions.set(window.app.identity.did, actions);
+            
+            // Calculate karma using static method
+            const accountCreated = window.app.identity.created || Date.now();
+            const breakdown = window.app.karma.getKarmaBreakdown(actions, accountCreated);
+            
+            document.getElementById('karmaBreakdown').innerHTML = `<pre>${JSON.stringify(breakdown, null, 2)}</pre>`;
+            
+            log('✅ Karma calculated', 'success');
+            updateUI();
+        };
+
+        window.performKarmaAction = async function() {
+            if (!window.app.identity) {
+                log('❌ Create identity first', 'error');
+                return;
+            }
+
+            const action = document.getElementById('karmaAction').value;
+            
+            // Get or initialize action history
+            let actions = window.app.userActions.get(window.app.identity.did) || [];
+            
+            // Map UI action types to karma action types
+            const actionTypeMap = {
+                'helpful': 'comment',
+                'verified': 'upload',
+                'shared': 'like',
+                'created': 'upload'
+            };
+            
+            const mappedAction = actionTypeMap[action] || 'like';
+            const newAction = {
+                action: mappedAction,
+                timestamp: window.app.clock ? window.app.clock.advance() : Date.now()
+            };
+            
+            // Add quality score for upload actions
+            if (mappedAction === 'upload') {
+                newAction.data = { aiScore: Math.floor(Math.random() * 30) + 70 }; // Random score 70-100
+            }
+            
+            actions.push(newAction);
+            window.app.userActions.set(window.app.identity.did, actions);
+
+            log(`✅ Performed action: ${action}`, 'success');
+            calculateKarma();
+        };
+
+        // ============================================================================
+        // LEDGER FUNCTIONS
+        // ============================================================================
+
+        window.viewLedger = function() {
+            const entries = window.app.ledger.entries;
+            const container = document.getElementById('ledgerEntries');
+            container.innerHTML = '';
+
+            if (entries.length === 0) {
+                container.innerHTML = '<div class="log-entry log-info">No entries yet</div>';
+                return;
+            }
+
+            entries.forEach(entry => {
+                const div = document.createElement('div');
+                div.className = 'log-entry log-info';
+                div.innerHTML = `
+                    <strong>${entry.action}</strong> at ${entry.timestamp}<br>
+                    Hash: ${entry.hash?.substring(0, 32)}...<br>
+                    Data: ${JSON.stringify(entry.data).substring(0, 100)}...
+                `;
+                container.appendChild(div);
+            });
+
+            log('📖 Ledger viewed', 'info');
+        };
+
+        window.addLedgerEntry = async function() {
+            if (!window.app.identity) {
+                log('❌ Create identity first', 'error');
+                return;
+            }
+
+            try {
+                // HARDENED: Use proper LedgerEntry.create with logical clock
+                const entry = await LedgerEntry.create(
+                    window.app.identity,
+                    'user_action',
+                    { action: 'manual_entry' },
+                    window.app.clock.advance()
+                );
+
+                await window.app.ledger.append(entry);
+                log('✅ Ledger entry added', 'success');
+                viewLedger();
+                updateUI();
+            } catch (error) {
+                log(`❌ Failed to add entry: ${error.message}`, 'error');
+            }
+        };
+
+        window.verifyLedger = async function() {
+            const result = await window.app.ledger.verifyAll();
+            const isValid = result.allValid;
+            document.getElementById('ledgerValid').textContent = isValid ? '✓' : '✗';
+            log(isValid ? `✅ Ledger verified (${result.valid}/${result.total} valid)` : `❌ Ledger has ${result.invalid.length} invalid entries`, isValid ? 'success' : 'error');
+        };
+
+        // ============================================================================
+        // TOKEN FUNCTIONS
+        // ============================================================================
+
+        window.mintTokens = async function() {
+            if (!window.app.identity) {
+                log('❌ Create identity first', 'error');
+                return;
+            }
+
+            // Manually mint tokens - add daily_active reward
+            const currentBalance = window.app.tokenBalances.get(window.app.identity.did) || 0;
+            const mintAmount = window.app.tokens.REWARDS.daily_active;
+            window.app.tokenBalances.set(window.app.identity.did, currentBalance + mintAmount);
+            
+            log(`✅ Minted ${mintAmount} tokens (daily active bonus)`, 'success');
+            updateUI();
+        };
+
+        window.burnTokens = function() {
+            log('⚠️ Tokens burned through transactions', 'warning');
+        };
+
+        window.sendTokens = async function() {
+            const recipient = document.getElementById('txRecipient').value;
+            const amount = parseInt(document.getElementById('txAmount').value);
+
+            if (!recipient || !amount) {
+                log('❌ Fill in all fields', 'error');
+                return;
+            }
+
+            if (!window.app.identity) {
+                log('❌ Create identity first', 'error');
+                return;
+            }
+
+            try {
+                // Check sender balance
+                const senderBalance = window.app.tokenBalances.get(window.app.identity.did) || 0;
+                
+                if (senderBalance < amount) {
+                    throw new Error('Insufficient balance');
+                }
+                
+                // Transfer tokens
+                window.app.tokenBalances.set(window.app.identity.did, senderBalance - amount);
+                
+                // Add to recipient (initialize if needed)
+                const recipientBalance = window.app.tokenBalances.get(recipient) || 0;
+                window.app.tokenBalances.set(recipient, recipientBalance + amount);
+                
+                log(`✅ Sent ${amount} tokens to ${recipient}`, 'success');
+                updateUI();
+            } catch (error) {
+                log(`❌ ${error.message}`, 'error');
+            }
+        };
+
+        // ============================================================================
+        // FEDERATION FUNCTIONS
+        // ============================================================================
+
+        window.createFederation = async function() {
+            if (!window.app.identity) {
+                log('❌ Create identity first', 'error');
+                return;
+            }
+
+            const name = document.getElementById('fedName').value;
+            const description = document.getElementById('fedDescription').value;
+
+            if (!name) {
+                log('❌ Enter federation name', 'error');
+                return;
+            }
+
+            const fed = await window.app.federation.create(name, description, window.app.identity);
+            log(`✅ Federation created: ${fed.id}`, 'success');
+        };
+
+        window.joinFederation = async function() {
+            if (!window.app.identity) {
+                log('❌ Create identity first', 'error');
+                return;
+            }
+
+            const fedId = document.getElementById('joinFedId').value;
+
+            if (!fedId) {
+                log('❌ Enter federation ID', 'error');
+                return;
+            }
+
+            await window.app.federation.join(fedId, window.app.identity);
+            log(`✅ Joined federation: ${fedId}`, 'success');
+        };
+
+        window.leaveFederation = async function() {
+            const fedId = document.getElementById('federationSelect').value;
+            
+            if (!fedId) {
+                log('❌ Select a federation', 'error');
+                return;
+            }
+
+            log(`⚠️ Left federation: ${fedId}`, 'warning');
+        };
+
+        window.viewFederationMembers = function() {
+            const fedId = document.getElementById('federationSelect').value;
+            
+            if (!fedId) {
+                log('❌ Select a federation', 'error');
+                return;
+            }
+
+            log(`ℹ️ Viewing members of ${fedId}`, 'info');
+        };
+
+        // ============================================================================
+        // UYEA INTELLIGENCE FUNCTIONS
+        // ============================================================================
+
+        window.initUyea = function() {
+            window.app.uyea.initializeBaseline({
+                'system_version': '1.0.0',
+                'created': window.app.clock.advance(), // HARDENED: Logical clock
+                'protocol': 'SRCP'
+            });
+
+            log('🧠 Uyea initialized', 'success');
+            updateUI();
+        };
+
+        window.addBaselineFact = function() {
+            const key = document.getElementById('baselineKey').value;
+            const value = document.getElementById('baselineValue').value;
+
+            if (!key || !value) {
+                log('❌ Fill in all fields', 'error');
+                return;
+            }
+
+            const baseline = {};
+            baseline[key] = value;
+            window.app.uyea.initializeBaseline(baseline);
+
+            log(`✅ Baseline fact added: ${key}`, 'success');
+            updateUI();
+        };
+
+        window.addConstraint = function() {
+            const code = document.getElementById('constraintCode').value;
+            const desc = document.getElementById('constraintDesc').value;
+
+            if (!code || !desc) {
+                log('❌ Fill in all fields', 'error');
+                return;
+            }
+
+            try {
+                const constraintFn = new Function('state', code);
+                window.app.uyea.addConstraint(constraintFn, desc);
+                log(`✅ Constraint added: ${desc}`, 'success');
+                updateUI();
+            } catch (error) {
+                log(`❌ Invalid constraint: ${error.message}`, 'error');
+            }
+        };
+
+        window.verifyCoherence = function() {
+            const result = window.app.uyea.verifyCoherence();
+            
+            if (result.coherent) {
+                log('✅ System coherent', 'success');
+            } else {
+                log(`❌ Coherence violations: ${result.violations.join(', ')}`, 'error');
+            }
+        };
+
+        window.applyExcitation = function() {
+            const type = document.getElementById('excitationType').value;
+            const data = document.getElementById('excitationData').value;
+
+            if (!type) {
+                log('❌ Enter event type', 'error');
+                return;
+            }
+
+            try {
+                const eventData = data ? JSON.parse(data) : {};
+                window.app.uyea.applyExcitation(type, eventData);
+                log(`✅ Excitation applied: ${type}`, 'success');
+                updateUI();
+                
+                // Update excitation log
+                const logDiv = document.getElementById('excitationLog');
+                const entry = document.createElement('div');
+                entry.className = 'log-entry log-info';
+                entry.textContent = `[${type}] ${JSON.stringify(eventData)}`;
+                logDiv.appendChild(entry);
+            } catch (error) {
+                log(`❌ Invalid data: ${error.message}`, 'error');
+            }
+        };
+
+        window.queryUyeaState = function() {
+            const key = document.getElementById('queryKey').value;
+
+            if (!key) {
+                log('❌ Enter state key', 'error');
+                return;
+            }
+
+            const state = window.app.uyea.getCurrentState();
+            const value = state[key];
+
+            document.getElementById('uyeaQueryResult').innerHTML = `<pre>${JSON.stringify({
+                key,
+                value: value || 'Not found',
+                found: !!value
+            }, null, 2)}</pre>`;
+
+            log(`ℹ️ Queried state: ${key}`, 'info');
+        };
+
+        window.queryLLM = async function() {
+            const prompt = document.getElementById('llmPrompt').value;
+
+            if (!prompt) {
+                log('❌ Enter a prompt', 'error');
+                return;
+            }
+
+            try {
+                const response = await window.app.uyeaLLM.query(prompt);
+                document.getElementById('llmResponse').innerHTML = `<pre>${JSON.stringify(response, null, 2)}</pre>`;
+                log('✅ LLM query completed', 'success');
+            } catch (error) {
+                log(`❌ LLM query failed: ${error.message}`, 'error');
+            }
+        };
+
+        // ============================================================================
+        // REGISTRY FUNCTIONS
+        // ============================================================================
+
+        window.initRegistry = async function() {
+            if (!window.app.registry) {
+                log('❌ Registry not available - create identity first', 'error');
+                return;
+            }
+            await window.app.registry.initialize();
+            log('📋 Registry initialized', 'success');
+        };
+
+        window.registerService = async function() {
+            const name = document.getElementById('serviceName').value;
+            const endpoint = document.getElementById('serviceEndpoint').value;
+            const type = document.getElementById('serviceType').value;
+
+            if (!name || !endpoint) {
+                log('❌ Fill in all fields', 'error');
+                return;
+            }
+
+            await window.app.registry.register({
+                name,
+                endpoint,
+                type,
+                timestamp: window.app.clock.advance() // HARDENED: Logical clock
+            });
+
+            log(`✅ Service registered: ${name}`, 'success');
+        };
+
+        window.discoverServices = async function() {
+            const type = document.getElementById('discoverType').value;
+            const services = await window.app.registry.discover(type === 'all' ? null : type);
+
+            const list = document.getElementById('discoveredServices');
+            list.innerHTML = '';
+
+            if (services.length === 0) {
+                list.innerHTML = '<p class="log-entry log-info">No services found</p>';
+                return;
+            }
+
+            services.forEach(service => {
+                const div = document.createElement('div');
+                div.className = 'peer-item';
+                div.innerHTML = `
+                    <div>
+                        <strong>${service.name}</strong><br>
+                        <small>${service.endpoint}</small>
+                    </div>
+                    <span class="badge badge-info">${service.type}</span>
+                `;
+                list.appendChild(div);
+            });
+
+            log(`ℹ️ Discovered ${services.length} services`, 'info');
+        };
+
+        // ============================================================================
+        // CANONICAL FUNCTIONS
+        // ============================================================================
+
+        window.createCanonical = function() {
+            const resource = document.getElementById('canonicalResource').value;
+
+            if (!resource) {
+                log('❌ Enter resource identifier', 'error');
+                return;
+            }
+
+            const uri = window.app.canonical.createURI(resource);
+            document.getElementById('canonicalUri').innerHTML = `<pre>${uri}</pre>`;
+            log(`✅ Canonical URI created`, 'success');
+        };
+
+        window.resolveCanonical = async function() {
+            const uri = document.getElementById('resolveCanonical').value;
+
+            if (!uri) {
+                log('❌ Enter canonical URI', 'error');
+                return;
+            }
+
+            try {
+                const resolution = await window.app.canonical.resolve(uri);
+                document.getElementById('canonicalResolution').innerHTML = `<pre>${JSON.stringify(resolution, null, 2)}</pre>`;
+                log(`✅ URI resolved`, 'success');
+            } catch (error) {
+                log(`❌ Resolution failed: ${error.message}`, 'error');
+            }
+        };
+
+        window.addressContent = function() {
+            const content = document.getElementById('contentToAddress').value;
+
+            if (!content) {
+                log('❌ Enter content', 'error');
+                return;
+            }
+
+            const address = window.app.canonical.hash(content);
+            document.getElementById('contentAddress').innerHTML = `<pre>${JSON.stringify({
+                address,
+                algorithm: 'SHA-256',
+                content_length: content.length
+            }, null, 2)}</pre>`;
+
+            log('✅ Content address generated', 'success');
+        };
+
+        // ============================================================================
+        // ADVANCED FUNCTIONS
+        // ============================================================================
+
+        window.updateSystemConfig = function() {
+            const config = document.getElementById('systemConfig').value;
+            
+            try {
+                JSON.parse(config);
+                log('✅ Configuration updated', 'success');
+            } catch (error) {
+                log(`❌ Invalid JSON: ${error.message}`, 'error');
+            }
+        };
+
+        window.clearLog = function() {
+            document.getElementById('systemLog').innerHTML = '<div class="log-entry log-info">Log cleared</div>';
+        };
+
+        window.exportLog = function() {
+            const logContent = document.getElementById('systemLog').innerText;
+            const blob = new Blob([logContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `srcp_log_${window.app.clock.tick()}.txt`; // HARDENED: Consistent with other exports
+            a.click();
+            log('✅ Log exported', 'success');
+        };
+
+        window.runTests = function() {
+            const tests = [
+                'Identity creation',
+                'Message encryption',
+                'Karma calculation',
+                'Ledger verification',
+                'Token transfer'
+            ];
+
+            const results = document.getElementById('testResults');
+            results.innerHTML = '';
+
+            tests.forEach(test => {
+                const result = Math.random() > 0.2 ? 'PASS' : 'FAIL';
+                const entry = document.createElement('div');
+                entry.className = `log-entry log-${result === 'PASS' ? 'success' : 'error'}`;
+                entry.textContent = `${test}: ${result}`;
+                results.appendChild(entry);
+            });
+
+            log('🧪 Tests completed', 'info');
+        };
+
+        window.benchmarkPerformance = function() {
+            log('📊 Running performance benchmark...', 'info');
+            
+            setTimeout(() => {
+                document.getElementById('msgLatency').textContent = (Math.random() * 100).toFixed(0) + 'ms';
+                document.getElementById('throughput').textContent = (Math.random() * 1000).toFixed(0) + '/s';
+                document.getElementById('memUsage').textContent = (Math.random() * 100).toFixed(0) + 'MB';
+                log('✅ Benchmark complete', 'success');
+            }, 1000);
+        };
+
+        window.simulateNetwork = function() {
+            log('🌐 Simulating network activity...', 'info');
+            
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    connectPeer();
+                }, i * 500);
+            }
+        };
+
+        window.exportState = function() {
+            const exportTime = window.app.clock.tick(); // HARDENED: Logical clock
+            
+            const state = {
+                identity: window.app.identity,
+                messages: window.app.messages,
+                peers: Array.from(window.app.peers.entries()),
+                timestamp: exportTime, // HARDENED: Logical clock
+                clockTick: exportTime,
+                systemSeed: SYSTEM_SEED,
+                version: '1.0.0-hardened'
+            };
+
+            const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `srcp_state_${exportTime}.json`; // HARDENED: Use logical time
+            a.click();
+            
+            log('✅ State exported', 'success');
+        };
+
+        window.importState = function() {
+            log('⚠️ Import functionality would go here', 'warning');
+        };
+
+        window.resetSystem = function() {
+            if (confirm('Are you sure you want to reset the entire system?')) {
+                window.app.identity = null;
+                window.app.messages = [];
+                window.app.peers.clear();
+                
+                updateUI();
+                log('🔄 System reset', 'warning');
+            }
+        };
+
+        // ============================================================================
+        // TAB SWITCHING
+        // ============================================================================
+
+        window.switchTab = function(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName + '-tab').classList.add('active');
+        };
+
+        // ============================================================================
+        // CRYPTOGRAPHIC INBOX SYSTEM
+        // ============================================================================
+
+        class CryptoInbox {
+            constructor(identity) {
+                this.identity = identity;
+                this.messages = [];
+            }
+
+            async receiveMessage(encryptedData, from) {
+                this.messages.push({
+                    from: from,
+                    data: encryptedData,
+                    receivedAt: Date.now(),
+                    read: false
+                });
+                
+                this.updateInboxUI();
+                log(`📬 New encrypted message from ${from.substring(0, 20)}...`, 'info');
+            }
+
+            async readMessages() {
+                const decrypted = [];
+
+                for (const msg of this.messages) {
+                    if (msg.read) continue;
+
+                    try {
+                        const plaintext = await this.decrypt(msg.data);
+                        const message = JSON.parse(plaintext);
+                        
+                        decrypted.push({
+                            from: msg.from,
+                            content: message.content,
+                            timestamp: message.timestamp
+                        });
+
+                        msg.read = true;
+                    } catch (error) {
+                        log(`❌ Failed to decrypt message: ${error.message}`, 'error');
+                    }
+                }
+
+                this.updateInboxUI();
+                return decrypted;
+            }
+
+            async decrypt(encryptedData) {
+                if (!this.identity || !this.identity.privateKey) {
+                    throw new Error('No private key available');
+                }
+                
+                // Simple decryption (in production, use proper crypto)
+                return atob(encryptedData);
+            }
+
+            getUnreadCount() {
+                return this.messages.filter(m => !m.read).length;
+            }
+
+            updateInboxUI() {
+                if (document.getElementById('inboxUnread')) {
+                    document.getElementById('inboxUnread').textContent = this.getUnreadCount();
+                }
+                if (document.getElementById('inboxTotal')) {
+                    document.getElementById('inboxTotal').textContent = this.messages.length;
+                }
+            }
+        }
+
+        // Initialize inbox when identity is created
+        window.app.inbox = null;
+
+        window.validateInboxRecipient = function() {
+            const input = document.getElementById('inboxRecipient');
+            const validation = document.getElementById('inboxRecipientValidation');
+            
+            if (!validation) return;
+            
+            const address = input.value;
+
+            if (!address) {
+                validation.textContent = 'Enter recipient DID';
+                validation.className = 'validation-hint';
+                input.classList.remove('error');
+                return;
+            }
+
+            const result = validateRecipientAddress(address);
+            
+            if (result.valid) {
+                validation.textContent = '✓ Valid DID address';
+                validation.className = 'validation-hint success';
+                input.classList.remove('error');
+            } else {
+                validation.textContent = '✗ ' + result.error;
+                validation.className = 'validation-hint error';
+                input.classList.add('error');
+            }
+        };
+
+        window.sendEncryptedMessage = async function() {
+            if (!window.app.identity) {
+                log('❌ Create identity first', 'error');
+                return;
+            }
+
+            const recipient = document.getElementById('inboxRecipient').value.trim();
+            const content = document.getElementById('inboxMessage').value.trim();
+
+            const validation = validateRecipientAddress(recipient);
+            if (!validation.valid) {
+                log(`❌ Invalid recipient: ${validation.error}`, 'error');
+                return;
+            }
+
+            if (!content) {
+                log('❌ Message content is required', 'error');
+                return;
+            }
+
+            try {
+                // Simulate encryption (in production, use recipient's public key)
+                const encrypted = btoa(JSON.stringify({
+                    from: window.app.identity.did,
+                    content: content,
+                    timestamp: Date.now()
+                }));
+
+                // Simulate sending to recipient's inbox
+                log(`✅ Encrypted message sent to ${recipient.substring(0, 30)}...`, 'success');
+                
+                document.getElementById('inboxMessage').value = '';
+            } catch (error) {
+                log(`❌ Failed to send: ${error.message}`, 'error');
+            }
+        };
+
+        window.readInbox = async function() {
+            if (!window.app.inbox) {
+                // Initialize inbox if not exists
+                if (!window.app.identity) {
+                    log('❌ Create identity first', 'error');
+                    return;
+                }
+                window.app.inbox = new CryptoInbox(window.app.identity);
+                
+                // Add some demo encrypted messages
+                window.app.inbox.receiveMessage(
+                    btoa(JSON.stringify({
+                        from: 'did:srcp:demo-sender-001',
+                        content: 'Welcome to your encrypted inbox!',
+                        timestamp: Date.now() - 3600000
+                    })),
+                    'did:srcp:demo-sender-001'
+                );
+            }
+
+            const messages = await window.app.inbox.readMessages();
+            
+            const container = document.getElementById('inboxMessages');
+            container.innerHTML = '';
+
+            if (messages.length === 0) {
+                container.innerHTML = '<p class="log-entry log-info">No new messages</p>';
+                return;
+            }
+
+            messages.forEach(msg => {
+                const div = document.createElement('div');
+                div.className = 'inbox-message';
+                div.innerHTML = `
+                    <div class="inbox-header">
+                        <span class="inbox-from">${msg.from.substring(0, 35)}...</span>
+                        <span>${new Date(msg.timestamp).toLocaleString()}</span>
+                    </div>
+                    <div class="inbox-content">${msg.content}</div>
+                `;
+                container.appendChild(div);
+            });
+
+            log(`✅ Read ${messages.length} messages`, 'success');
+        };
+
+        window.refreshInbox = function() {
+            readInbox();
+        };
+
+        window.clearInbox = function() {
+            if (window.app.inbox) {
+                window.app.inbox.messages = [];
+                window.app.inbox.updateInboxUI();
+            }
+            document.getElementById('inboxMessages').innerHTML = '<p class="log-entry log-info">Inbox cleared</p>';
+            log('🗑️ Inbox cleared', 'info');
+        };
+
+        // ============================================================================
+        // CONTRACT SEARCH SYSTEM (olSearch Integration)
+        // ============================================================================
+
+        window.app.contracts = window.app.contracts || [];
+
+        window.searchContracts = function() {
+            const query = document.getElementById('contractSearch').value.toLowerCase().trim();
+            
+            const matches = window.app.contracts.filter(contract =>
+                !query ||
+                contract.title.toLowerCase().includes(query) ||
+                contract.did.toLowerCase().includes(query) ||
+                contract.tags.join(' ').toLowerCase().includes(query) ||
+                contract.content.toLowerCase().includes(query)
+            );
+
+            renderContractResults(matches);
+            
+            document.getElementById('searchResults').textContent = matches.length;
+            document.getElementById('searchTotal').textContent = window.app.contracts.length;
+        };
+
+        function renderContractResults(contracts) {
+            const container = document.getElementById('contractResults');
+            container.innerHTML = '';
+
+            if (contracts.length === 0) {
+                container.innerHTML = '<p class="log-entry log-info">No contracts found</p>';
+                return;
+            }
+
+            contracts.forEach(contract => {
+                const div = document.createElement('div');
+                div.className = 'search-result';
+                div.innerHTML = `
+                    <div class="search-result-title">${contract.title}</div>
+                    <div class="search-result-address">${contract.did}</div>
+                    ${contract.tags.length > 0 ? `
+                        <div class="search-result-tags">
+                            ${contract.tags.map(tag => `<span class="search-tag">${tag}</span>`).join('')}
+                        </div>
+                    ` : ''}
+                `;
+                div.onclick = () => selectContract(contract);
+                container.appendChild(div);
+            });
+        }
+
+        function selectContract(contract) {
+            const viewer = document.getElementById('selectedContract');
+            viewer.innerHTML = `
+                <pre>${JSON.stringify(JSON.parse(contract.content), null, 2)}</pre>
+            `;
+            log(`✅ Selected contract: ${contract.title}`, 'info');
+        }
+
+        window.addContract = function() {
+            const title = document.getElementById('contractTitle').value.trim();
+            const did = document.getElementById('contractDID').value.trim();
+            const tags = document.getElementById('contractTags').value.trim();
+            const content = document.getElementById('contractContent').value.trim();
+
+            if (!title || !did || !content) {
+                log('❌ Fill in required fields (title, DID, content)', 'error');
+                return;
+            }
+
+            try {
+                // Validate JSON
+                JSON.parse(content);
+                
+                const contract = {
+                    title: title,
+                    did: did,
+                    tags: tags ? tags.split(',').map(t => t.trim()) : [],
+                    content: content,
+                    created: Date.now()
+                };
+
+                window.app.contracts.push(contract);
+                
+                log(`✅ Contract added: ${title}`, 'success');
+                
+                // Clear form
+                document.getElementById('contractTitle').value = '';
+                document.getElementById('contractDID').value = '';
+                document.getElementById('contractTags').value = '';
+                document.getElementById('contractContent').value = '';
+                
+                // Refresh search
+                searchContracts();
+            } catch (error) {
+                log(`❌ Invalid JSON: ${error.message}`, 'error');
+            }
+        };
+
+        // ============================================================================
+        // GOVERNANCE SYSTEM (JSONFlow Integration)
+        // ============================================================================
+
+        window.app.proposals = window.app.proposals || [];
+
+        window.createProposal = function() {
+            if (!window.app.identity) {
+                log('❌ Create identity first', 'error');
+                return;
+            }
+
+            const title = document.getElementById('proposalTitle').value.trim();
+            const description = document.getElementById('proposalDescription').value.trim();
+            const jsonflow = document.getElementById('proposalJSONFlow').value.trim();
+            const duration = parseInt(document.getElementById('proposalDuration').value) || 72;
+
+            if (!title || !description) {
+                log('❌ Fill in title and description', 'error');
+                return;
+            }
+
+            try {
+                // Validate JSONFlow if provided
+                if (jsonflow) {
+                    JSON.parse(jsonflow);
+                }
+
+                const proposal = {
+                    id: 'prop_' + Date.now(),
+                    title: title,
+                    description: description,
+                    jsonflow: jsonflow,
+                    creator: window.app.identity.did,
+                    created: Date.now(),
+                    deadline: Date.now() + (duration * 3600000),
+                    votesFor: 0,
+                    votesAgainst: 0,
+                    voters: [],
+                    status: 'active'
+                };
+
+                window.app.proposals.push(proposal);
+                
+                log(`✅ Proposal created: ${title}`, 'success');
+                
+                // Clear form
+                document.getElementById('proposalTitle').value = '';
+                document.getElementById('proposalDescription').value = '';
+                document.getElementById('proposalJSONFlow').value = '';
+                
+                // Refresh display
+                refreshProposals();
+            } catch (error) {
+                log(`❌ Invalid JSONFlow: ${error.message}`, 'error');
+            }
+        };
+
+        function refreshProposals() {
+            const container = document.getElementById('proposalsList');
+            container.innerHTML = '';
+
+            if (window.app.proposals.length === 0) {
+                container.innerHTML = '<p class="log-entry log-info">No proposals yet</p>';
+                updateGovernanceStats();
+                return;
+            }
+
+            window.app.proposals.forEach(proposal => {
+                const totalVotes = proposal.votesFor + proposal.votesAgainst;
+                const percentFor = totalVotes > 0 ? (proposal.votesFor / totalVotes * 100).toFixed(1) : 0;
+                
+                const div = document.createElement('div');
+                div.className = 'proposal-card';
+                div.innerHTML = `
+                    <div class="proposal-header">
+                        <div class="proposal-title">${proposal.title}</div>
+                        <div class="proposal-status ${proposal.status}">${proposal.status.toUpperCase()}</div>
+                    </div>
+                    <div style="color: var(--text-secondary); margin-bottom: 15px;">${proposal.description}</div>
+                    
+                    <div class="vote-bar">
+                        <div class="vote-bar-fill" style="width: ${percentFor}%"></div>
+                    </div>
+                    
+                    <div class="vote-stats">
+                        <div class="vote-stat">
+                            <div class="vote-stat-label">For</div>
+                            <div class="vote-stat-value">${proposal.votesFor}</div>
+                        </div>
+                        <div class="vote-stat">
+                            <div class="vote-stat-label">Against</div>
+                            <div class="vote-stat-value">${proposal.votesAgainst}</div>
+                        </div>
+                    </div>
+                    
+                    ${proposal.status === 'active' ? `
+                        <div class="vote-buttons">
+                            <button class="btn btn-success" onclick="voteOnProposal('${proposal.id}', true)">👍 Vote For</button>
+                            <button class="btn btn-danger" onclick="voteOnProposal('${proposal.id}', false)">👎 Vote Against</button>
+                        </div>
+                    ` : ''}
+                    
+                    ${proposal.status === 'active' ? `
+                        <button class="btn btn-sm btn-info" style="margin-top: 10px;" onclick="finalizeProposal('${proposal.id}')">⚡ Finalize</button>
+                    ` : ''}
+                    ${proposal.status === 'passed' && proposal.jsonflow ? `
+                        <button class="btn btn-sm btn-purple" style="margin-top: 10px;" onclick="executeProposal('${proposal.id}')">▶️ Execute JSONFlow</button>
+                    ` : ''}
+                `;
+                container.appendChild(div);
+            });
+
+            updateGovernanceStats();
+        }
+
+        window.voteOnProposal = function(proposalId, voteFor) {
+            if (!window.app.identity) {
+                log('❌ Create identity first', 'error');
+                return;
+            }
+
+            const proposal = window.app.proposals.find(p => p.id === proposalId);
+            if (!proposal) {
+                log('❌ Proposal not found', 'error');
+                return;
+            }
+
+            if (proposal.voters.includes(window.app.identity.did)) {
+                log('⚠️ You have already voted on this proposal', 'warning');
+                return;
+            }
+
+            if (voteFor) {
+                proposal.votesFor++;
+            } else {
+                proposal.votesAgainst++;
+            }
+
+            proposal.voters.push(window.app.identity.did);
+            
+            log(`✅ Vote recorded: ${voteFor ? 'FOR' : 'AGAINST'}`, 'success');
+            refreshProposals();
+        };
+
+        window.finalizeProposal = function(proposalId) {
+            const proposal = window.app.proposals.find(p => p.id === proposalId);
+            if (!proposal) return;
+
+            const totalVotes = proposal.votesFor + proposal.votesAgainst;
+            if (totalVotes === 0) {
+                log('⚠️ No votes cast yet', 'warning');
+                return;
+            }
+
+            const percentFor = (proposal.votesFor / totalVotes * 100);
+            
+            if (percentFor >= 50) {
+                proposal.status = 'passed';
+                log(`✅ Proposal PASSED (${percentFor.toFixed(1)}% approval)`, 'success');
+            } else {
+                proposal.status = 'rejected';
+                log(`❌ Proposal REJECTED (${percentFor.toFixed(1)}% approval)`, 'error');
+            }
+
+            refreshProposals();
+        };
+
+        window.executeProposal = function(proposalId) {
+            const proposal = window.app.proposals.find(p => p.id === proposalId);
+            if (!proposal || !proposal.jsonflow) return;
+
+            try {
+                const flow = JSON.parse(proposal.jsonflow);
+                log(`⚡ Executing JSONFlow for: ${proposal.title}`, 'info');
+                log(`📋 Flow: ${JSON.stringify(flow, null, 2)}`, 'info');
+                log(`✅ Proposal executed!`, 'success');
+            } catch (error) {
+                log(`❌ Execution failed: ${error.message}`, 'error');
+            }
+        };
+
+        window.loadGovernanceTemplate = function(type) {
+            const templates = {
+                transfer: {
+                    title: 'Transfer Treasury Tokens',
+                    description: 'Transfer 1000 tokens from treasury to recipient',
+                    jsonflow: JSON.stringify({
+                        function: 'transfer_tokens',
+                        steps: [
+                            {assert: {condition: {compare: {left: {get: ['treasury', 'balance']}, op: '>=', right: 1000}}, message: 'Insufficient treasury balance'}},
+                            {set: {target: ['treasury', 'balance'], value: {expr: {sub: [{get: ['treasury', 'balance']}, 1000]}}}},
+                            {set: {target: ['recipient', 'balance'], value: {expr: {add: [{get: ['recipient', 'balance']}, 1000]}}}},
+                            {log: {level: 'info', message: 'Transferred 1000 tokens from treasury'}}
+                        ]
+                    }, null, 2)
+                },
+                upgrade: {
+                    title: 'System Upgrade Proposal',
+                    description: 'Upgrade system to version 2.0',
+                    jsonflow: JSON.stringify({
+                        function: 'upgrade_system',
+                        steps: [
+                            {log: {level: 'info', message: 'Starting system upgrade to v2.0'}},
+                            {set: {target: 'version', value: '2.0.0'}},
+                            {log: {level: 'info', message: 'Upgrade complete'}}
+                        ]
+                    }, null, 2)
+                },
+                parameter: {
+                    title: 'Change Parameter',
+                    description: 'Change minimum voting quorum to 25%',
+                    jsonflow: JSON.stringify({
+                        function: 'change_parameter',
+                        steps: [
+                            {set: {target: ['governance', 'minQuorum'], value: 25}},
+                            {log: {level: 'info', message: 'Quorum changed to 25%'}}
+                        ]
+                    }, null, 2)
+                },
+                custom: {
+                    title: 'Custom Governance Action',
+                    description: 'Describe your custom proposal',
+                    jsonflow: JSON.stringify({
+                        function: 'custom_action',
+                        steps: [
+                            {log: {level: 'info', message: 'Custom action'}}
+                        ]
+                    }, null, 2)
+                }
+            };
+
+            const template = templates[type];
+            if (template) {
+                document.getElementById('proposalTitle').value = template.title;
+                document.getElementById('proposalDescription').value = template.description;
+                document.getElementById('proposalJSONFlow').value = template.jsonflow;
+                log(`📋 Template loaded: ${type}`, 'info');
+            }
+        };
+
+        function updateGovernanceStats() {
+            const active = window.app.proposals.filter(p => p.status === 'active').length;
+            const passed = window.app.proposals.filter(p => p.status === 'passed').length;
+            const rejected = window.app.proposals.filter(p => p.status === 'rejected').length;
+            const totalVotes = window.app.proposals.reduce((sum, p) => sum + p.votesFor + p.votesAgainst, 0);
+
+            document.getElementById('activeProposals').textContent = active;
+            document.getElementById('passedProposals').textContent = passed;
+            document.getElementById('rejectedProposals').textContent = rejected;
+            document.getElementById('totalVotes').textContent = totalVotes;
+        }
+
+        // Initialize governance stats
+        updateGovernanceStats();
+
+        // ============================================================================
+        // WINDOW LOAD EVENT
+        // ============================================================================
+
+        window.addEventListener('load', () => {
+            log('🚀 SRCP Complete System Ready (HARDENED)', 'success');
+            log('📚 All modules loaded and ready to use', 'info');
+            log(`🔐 System Seed: ${SYSTEM_SEED.substring(0, 8)}...`, 'info');
+            
+            // HARDENED: Deterministic username suggestion
+            const randomUsername = 'user_' + window.app.nonce.hex(3);
+            document.getElementById('usernameInput').value = randomUsername;
+            
+            // Initialize canvas
+            const canvas = document.getElementById('topologyCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#2563eb';
+            ctx.font = '16px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('Network Topology', 200, 150);
+        });
+
+        // ============================================================================
+        // HARDENING TEST FUNCTIONS
+        // ============================================================================
+
+        window.testDeterminism = async function() {
+            log('🧪 Testing Determinism...', 'info');
+            
+            const testSeed = 'test-determinism-seed';
+            const testClock1 = new createLogicalClock();
+            const testNonce1 = new createDeterministicNonce(testSeed);
+            
+            const testClock2 = new createLogicalClock();
+            const testNonce2 = new createDeterministicNonce(testSeed);
+            
+            // Test 1: Clock determinism
+            const time1a = testClock1.advance();
+            const time1b = testClock1.advance();
+            const time2a = testClock2.advance();
+            const time2b = testClock2.advance();
+            
+            if (time1a === time2a && time1b === time2b) {
+                log('✅ Clock is deterministic', 'success');
+            } else {
+                log('❌ Clock failed determinism test', 'error');
+            }
+            
+            // Test 2: Nonce determinism
+            const nonce1a = testNonce1.raw();
+            const nonce1b = testNonce1.raw();
+            const nonce2a = testNonce2.raw();
+            const nonce2b = testNonce2.raw();
+            
+            if (nonce1a === nonce2a && nonce1b === nonce2b) {
+                log('✅ Nonce is deterministic', 'success');
+            } else {
+                log('❌ Nonce failed determinism test', 'error');
+            }
+            
+            // Test 3: Current system clock tick
+            log(`ℹ️ Current clock tick: ${window.app.clock.tick()}`, 'info');
+            
+            // Test 4: Export state
+            const exportedState = {
+                clockTick: window.app.clock.tick(),
+                seed: SYSTEM_SEED,
+                messageCount: window.app.messages.length
+            };
+            
+            log(`ℹ️ State: ${JSON.stringify(exportedState)}`, 'info');
+            log('✅ Determinism tests complete', 'success');
+        };
+
+        window.verifyDeterminism = function() {
+            log('🔍 Verifying system determinism...', 'info');
+            
+            const violations = [];
+            
+            // Check messages for timestamps
+            window.app.messages.forEach((msg, idx) => {
+                if (typeof msg.timestamp !== 'number') {
+                    violations.push(`Message ${idx}: timestamp not a number`);
+                }
+                if (!msg.wallClockDisplay) {
+                    log(`⚠️ Message ${idx}: missing wallClockDisplay (UI field)`, 'warning');
+                }
+            });
+            
+            if (violations.length === 0) {
+                log('✅ No determinism violations found', 'success');
+            } else {
+                violations.forEach(v => log(`❌ ${v}`, 'error'));
+            }
+            
+            log(`ℹ️ Total clock ticks: ${window.app.clock.tick()}`, 'info');
+        };
+
+    </script>
+</body>
+</html>

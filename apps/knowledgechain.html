@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="srcp:did" content="did:srcp:app/knowledgechain"/>
+  <meta name="srcp:app" content="knowledgechain"/>
+  <title>KnowledgeChain • Decentralized Knowledge</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-start: #0f172a;
+      --bg-end:   #1e293b;
+      --surface:  #1e293b;
+      --surface-2:#334155;
+      --accent:   #c084fc;
+      --accent-dark: #a855f7;
+      --text:     #e2e8f0;
+      --text2:    #94a3b8;
+      --border:   #334155;
+      --green:    #22c55e;
+      --yellow:   #eab308;
+      --red:      #ef4444;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: linear-gradient(135deg, var(--bg-start), var(--bg-end));
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    .srcp-nav {
+      display: flex;
+      gap: 14px;
+      padding: 12px 20px;
+      background: rgba(15, 23, 42, 0.92);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+      flex-wrap: wrap;
+    }
+
+    .srcp-nav a {
+      color: #a5d8ff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.92rem;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+
+    .srcp-nav a:hover {
+      background: rgba(165, 216, 255, 0.12);
+      color: white;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+
+    header {
+      text-align: center;
+      padding: 40px 20px 60px;
+      background: linear-gradient(to bottom, rgba(192,132,252,0.08), transparent);
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 5vw, 3.4rem);
+      font-weight: 800;
+      background: linear-gradient(90deg, #c084fc, #f472b6, #60a5fa);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 12px;
+    }
+
+    .subtitle {
+      color: var(--text2);
+      font-size: 1.15rem;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin: 32px 0 48px;
+    }
+
+    .stat-card {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      backdrop-filter: blur(6px);
+    }
+
+    .stat-value {
+      font-size: 2.1rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .stat-label {
+      color: var(--text2);
+      font-size: 0.9rem;
+    }
+
+    .search-container {
+      display: flex;
+      gap: 12px;
+      max-width: 720px;
+      margin: 0 auto 40px;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 14px 18px;
+      background: rgba(30,41,59,0.6);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: white;
+      font-size: 1.05rem;
+    }
+
+    .btn {
+      padding: 14px 28px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(168,85,247,0.35);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+    }
+
+    .main-layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 32px;
+    }
+
+    .sidebar {
+      background: rgba(30,41,59,0.6);
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid var(--border);
+      height: fit-content;
+      position: sticky;
+      top: 100px;
+    }
+
+    .sidebar h3 {
+      color: var(--accent);
+      margin-bottom: 16px;
+      font-size: 1.15rem;
+    }
+
+    .domain-item {
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .domain-item:hover,
+    .domain-item.active {
+      background: rgba(192,132,252,0.15);
+      border-left: 4px solid var(--accent);
+    }
+
+    .question-card {
+      background: rgba(30,41,59,0.7);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      transition: all 0.2s;
+    }
+
+    .question-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--accent);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+    }
+
+    .question-title {
+      font-size: 1.28rem;
+      font-weight: 600;
+      color: #e0f2fe;
+      margin-bottom: 12px;
+      cursor: pointer;
+    }
+
+    .question-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      color: var(--text2);
+      font-size: 0.92rem;
+      margin-bottom: 16px;
+    }
+
+    .answer-section {
+      background: rgba(15,23,42,0.5);
+      border-radius: 12px;
+      padding: 18px;
+      margin-top: 16px;
+      border-left: 4px solid var(--accent);
+    }
+
+    .vote-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .vote-btn {
+      padding: 8px 18px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .vote-btn:hover {
+      background: rgba(192,132,252,0.15);
+      border-color: var(--accent);
+    }
+
+    .bounty-badge, .expert-badge, .quality-score {
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .bounty-badge { background: rgba(234,179,8,0.2); color: #eab308; border: 1px solid rgba(234,179,8,0.4); }
+    .expert-badge  { background: rgba(34,197,94,0.2);  color: #22c55e;  border: 1px solid rgba(34,197,94,0.4);  }
+    .score-excellent { background: rgba(34,197,94,0.25);  color: #22c55e; }
+    .score-good     { background: rgba(59,130,246,0.25);  color: #3b82f6; }
+    .score-fair     { background: rgba(234,179,8,0.25);   color: #eab308; }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal.active { display: flex; }
+
+    .modal-content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      max-width: 720px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 14px;
+      background: rgba(15,23,42,0.6);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: white;
+      margin: 12px 0;
+      font-family: inherit;
+    }
+
+    textarea { min-height: 160px; resize: vertical; }
+
+    @media (max-width: 1024px) {
+      .main-layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+    }
+
+    @media (max-width: 640px) {
+      header { padding: 32px 16px 48px; }
+      .search-container { flex-direction: column; }
+      .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="srcp-nav">
+  <a href="./srcp-complete-explorer.html">🧭 Explorer</a>
+  <a href="./srcp-dashboard.html">📊 Dashboard</a>
+  <a href="./marketplace.html">🛒 Marketplace</a>
+  <a href="./truthrank.html">🧠 TruthRank</a>
+  <a href="./govchain.html">🏛️ GovChain</a>
+  <a href="./knowledgechain.html">📚 Knowledge</a>
+  <a href="./skillswap.html">💼 SkillSwap</a>
+  <a href="./decentralbank.html">💰 Bank</a>
+  <a href="./messenger.html">💬 Messenger</a>
+  <a href="./uyea.html">🤖 UYEA</a>
+  <a href="./complete-demo.html">🔥 Demo</a>
+  <a href="./truthrank-portal.html">🏠 Portal</a>
+  <a href="./srcp-jsonflow-platform.html">🔥 Json-Flow</a>
+  <a href="./truthrank-test-suite.html">🏠 Test</a>
+  <a href="./olSearch.html">🏠 Address-Manager</a>
+  <a href="./token-platform.html">🏠 Token</a>
+   <a href="./srcp-jbc.html">🏠 PLATFORM</a>
+</nav>
+
+  <div class="container">
+
+    <header>
+      <h1>KnowledgeChain</h1>
+      <p class="subtitle">Decentralized, community-governed knowledge base • Earn karma & tokens for high-quality contributions</p>
+    </header>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-value">18.4k</div>
+        <div class="stat-label">Knowledge Items</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">47k</div>
+        <div class="stat-label">Answers & Edits</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">3.2M</div>
+        <div class="stat-label">Total Views</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">9.4</div>
+        <div class="stat-label">Avg Quality Score</div>
+      </div>
+    </div>
+
+    <div class="search-container">
+      <input type="text" class="search-input" placeholder="Ask anything or search knowledge..."/>
+      <button class="btn" onclick="document.getElementById('askModal').classList.add('active')">Ask Question</button>
+    </div>
+
+    <div class="main-layout">
+      <aside class="sidebar">
+        <h3>Domains</h3>
+        <div class="domain-list">
+          <div class="domain-item active">All Domains</div>
+          <div class="domain-item">Physics & Astronomy</div>
+          <div class="domain-item">Biology & Medicine</div>
+          <div class="domain-item">Computer Science</div>
+          <div class="domain-item">History & Philosophy</div>
+          <div class="domain-item">Economics & Finance</div>
+          <div class="domain-item">Engineering</div>
+          <div class="domain-item">Mathematics</div>
+          <div class="domain-item">Social Sciences</div>
+        </div>
+      </aside>
+
+      <main>
+        <!-- Example question cards -->
+        <div class="question-card">
+          <div class="question-title">Why does quantum entanglement appear to violate relativity?</div>
+          <div class="question-meta">
+            <span>Physics • Asked by did:plc:abc123 • 14h ago</span>
+            <span class="quality-score score-excellent">9.4/10</span>
+            <span class="expert-badge">Expert Consensus</span>
+          </div>
+          <div class="answer-section">
+            <div class="answer-text">
+              Entanglement does not allow faster-than-light communication. The no-communication theorem shows that measuring one particle cannot be used to transmit classical information to the other...
+            </div>
+            <div class="answer-footer">
+              <div>Answered by did:plc:xyz789 • Verified Expert</div>
+              <div class="vote-buttons">
+                <button class="vote-btn">↑ Helpful</button>
+                <button class="vote-btn">↓ Not helpful</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="question-card">
+          <div class="question-title">What is the most energy-efficient consensus mechanism in 2026?</div>
+          <div class="question-meta">
+            <span>Cryptocurrency • Bounty: 1200 tokens</span>
+            <span class="bounty-badge">Open Bounty</span>
+          </div>
+          <div class="vote-buttons" style="margin-top:16px">
+            <button class="btn">Submit Answer (earn tokens)</button>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Ask Question Modal -->
+  <div class="modal" id="askModal">
+    <div class="modal-content">
+      <h2 style="color:var(--accent); margin-bottom:24px">Ask the KnowledgeChain</h2>
+      <form>
+        <input type="text" placeholder="Question title (be specific)" required/>
+        <textarea placeholder="Provide context, background, or what you've already found..."></textarea>
+        <select>
+          <option value="">Select domain / category</option>
+          <option>Physics & Astronomy</option>
+          <option>Biology & Medicine</option>
+          <option>Computer Science</option>
+          <!-- ... more options ... -->
+        </select>
+        <input type="text" placeholder="Optional: tags (comma separated)"/>
+        <div style="margin:20px 0; color:var(--text2)">
+          Cost: <strong>8 tokens</strong> • Reward potential: up to 1200+ tokens + karma
+        </div>
+        <div style="display:flex; gap:12px; margin-top:24px">
+          <button type="submit" class="btn">Post Question</button>
+          <button type="button" class="btn btn-outline" onclick="document.getElementById('askModal').classList.remove('active')">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // SRCP Navigation Helpers (your original logic preserved)
+    window.APP_PATHS = {
+      'marketplace': 'marketplace.html',
+      'decentralbank': 'decentralbank.html',
+      'skillswap': 'skillswap.html',
+      'govchain': 'govchain.html',
+      'knowledgechain': 'knowledgechain.html',
+      'truthrank': 'truthrank.html',
+      'dashboard': 'srcp-dashboard.html',
+      'explorer': 'srcp-complete-explorer.html',
+      'platform': 'srcp-jsonflow-platform.html',
+      'demo': 'demo.html'
+    };
+
+    window.parseDID = function(didUri) {
+      const pattern = /^did:srcp:app\/([a-z-]+)(?:\/([a-z0-9-]+))?$/;
+      const match = didUri.match(pattern);
+      return match ? { appName: match[1], instanceId: match[2] || null } : null;
+    };
+
+    window.navigateToDID = function(didUri) {
+      const parsed = window.parseDID(didUri);
+      if (!parsed) return;
+      const path = window.APP_PATHS[parsed.appName];
+      if (!path) {
+        console.warn('Unknown SRCP app:', parsed.appName);
+        return;
+      }
+      let url = path + '?did=' + encodeURIComponent(didUri);
+      if (parsed.instanceId) url += '&instance=' + parsed.instanceId;
+      window.location.href = url;
+    };
+  </script>
+
+</body>
+</html>

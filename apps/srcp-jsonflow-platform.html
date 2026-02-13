@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="srcp:did" content="did:srcp:app/jsonflow">
+  <meta name="srcp:app" content="jsonflow">
+  <title>SRCP • JSONFlow • Universal Contract Layer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1f2937;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --text2: #8b949e;
+      --accent: #58a6ff;
+      --purple: #8a4fff;
+      --green: #3fb950;
+      --mono: 'JetBrains Mono', monospace;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+    .srcp-nav {
+      display: flex;
+      gap: 14px;
+      padding: 12px 20px;
+      background: rgba(13,17,23,0.92);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+      flex-wrap: wrap;
+    }
+    .srcp-nav a {
+      color: #a5d8ff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.92rem;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+    .srcp-nav a:hover { background: rgba(165,216,255,0.12); color: white; }
+    .container { max-width: 1400px; margin: 0 auto; padding: 24px 16px; }
+    header {
+      text-align: center;
+      padding: 40px 20px 60px;
+    }
+    h1 {
+      font-size: clamp(2.4rem, 6vw, 3.8rem);
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--accent), var(--purple), #f472b6);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 12px;
+    }
+    .subtitle { color: var(--text2); font-size: 1.15rem; max-width: 720px; margin: 0 auto; }
+    .input-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      padding: 16px;
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: white;
+      font-family: var(--mono);
+      font-size: 1rem;
+      resize: vertical;
+      margin: 12px 0;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .btn {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, var(--accent), #388bfd);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(88,166,255,0.35); }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+    }
+    .output-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+      gap: 24px;
+    }
+    .output-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .panel-header {
+      background: var(--surface2);
+      padding: 12px 16px;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+    }
+    pre {
+      padding: 16px;
+      background: #0d1117;
+      font-family: var(--mono);
+      font-size: 0.94rem;
+      overflow-x: auto;
+      margin: 0;
+      max-height: 420px;
+    }
+    .status {
+      padding: 12px;
+      border-radius: 8px;
+      margin: 16px 0;
+      font-weight: 500;
+    }
+    .success { background: rgba(63,185,80,0.15); color: #3fb950; }
+    .error   { background: rgba(248,81,73,0.15); color: #f85149; }
+    @media (max-width: 900px) { .output-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+  <nav class="srcp-nav">
+  <a href="./srcp-complete-explorer.html">🧭 Explorer</a>
+  <a href="./srcp-dashboard.html">📊 Dashboard</a>
+  <a href="./marketplace.html">🛒 Marketplace</a>
+  <a href="./truthrank.html">🧠 TruthRank</a>
+  <a href="./govchain.html">🏛️ GovChain</a>
+  <a href="./knowledgechain.html">📚 Knowledge</a>
+  <a href="./skillswap.html">💼 SkillSwap</a>
+  <a href="./decentralbank.html">💰 Bank</a>
+  <a href="./messenger.html">💬 Messenger</a>
+  <a href="./uyea.html">🤖 UYEA</a>
+  <a href="./complete-demo.html">🔥 Demo</a>
+  <a href="./truthrank-portal.html">🏠 Portal</a>
+  <a href="./srcp-jsonflow-platform.html">🔥 Json-Flow</a>
+  <a href="./truthrank-test-suite.html">🏠 Test</a>
+  <a href="./olSearch.html">🏠 Address-Manager</a>
+  <a href="./token-platform.html">🏠 Token</a>
+   <a href="./srcp-jbc.html">🏠 PLATFORM</a>
+</nav>
+<div class="container">
+  <header>
+    <h1>SRCP • JSONFlow</h1>
+    <p class="subtitle">Natural language → universal contract layer → any language • Verifiable • Portable</p>
+  </header>
+
+  <div class="input-section">
+    <h2 style="margin-bottom:16px;color:var(--accent)">Describe your smart contract in plain English</h2>
+    <textarea id="nlInput" placeholder="Example: Create a simple token transfer function that checks balance, subtracts from sender, adds to receiver, and logs the transfer. Require amount > 0."></textarea>
+    <div class="controls">
+      <input type="text" id="contractName" placeholder="Contract name (e.g. TokenTransfer)" style="flex:1;max-width:320px;padding:12px;border:1px solid var(--border);border-radius:10px;background:#0d1117;color:white;">
+      <button class="btn" onclick="registerContract()">Register Contract</button>
+      <button class="btn btn-outline" onclick="clearAll()">Clear</button>
+    </div>
+  </div>
+
+  <div id="status" class="status" style="display:none;"></div>
+
+  <div class="output-grid">
+    <div class="output-panel">
+      <div class="panel-header">JSONFlow (pivot representation)</div>
+      <pre id="jsonflowOutput">— waiting for input —</pre>
+    </div>
+    <div class="output-panel">
+      <div class="panel-header">Compiled JavaScript</div>
+      <pre id="jsOutput">— not compiled yet —</pre>
+    </div>
+    <div class="output-panel">
+      <div class="panel-header">Compiled Solidity</div>
+      <pre id="solidityOutput">— not compiled yet —</pre>
+    </div>
+    <div class="output-panel">
+      <div class="panel-header">Execution Result</div>
+      <pre id="execOutput">— not executed yet —</pre>
+    </div>
+  </div>
+</div>
+
+<script>
+window.APP_PATHS={
+  marketplace:'marketplace.html',
+  decentralbank:'decentralbank.html',
+  skillswap:'skillswap.html',
+  govchain:'govchain.html',
+  knowledgechain:'knowledgechain.html',
+  truthrank:'truthrank.html',
+  dashboard:'srcp-dashboard.html',
+  explorer:'srcp-complete-explorer.html',
+  platform:'srcp-jsonflow-platform.html',
+  demo:'demo.html'
+};
+
+window.parseDID=function(didUri){
+  const m=didUri.match(/^did:srcp:app\/([a-z-]+)(?:\/([a-z0-9-]+))?$/);
+  return m?{appName:m[1],instanceId:m[2]||null}:null;
+};
+
+window.navigateToDID=function(didUri){
+  const p=window.parseDID(didUri);
+  if(!p)return;
+  const path=window.APP_PATHS[p.appName];
+  if(!path)return console.error('Unknown app:',p.appName);
+  let url=path+'?did='+encodeURIComponent(didUri);
+  if(p.instanceId)url+='&instance='+p.instanceId;
+  window.location.href=url;
+};
+
+let currentJSONFlow = null;
+let currentContractName = '';
+
+function showStatus(msg, type='success'){
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status ' + type;
+  el.style.display = 'block';
+  setTimeout(()=>el.style.display='none', 5000);
+}
+
+function clearAll(){
+  document.getElementById('nlInput').value='';
+  document.getElementById('contractName').value='';
+  document.getElementById('jsonflowOutput').textContent='— cleared —';
+  document.getElementById('jsOutput').textContent='— cleared —';
+  document.getElementById('solidityOutput').textContent='— cleared —';
+  document.getElementById('execOutput').textContent='— cleared —';
+  currentJSONFlow = null;
+  currentContractName = '';
+}
+
+function mockNaturalToJSONFlow(text){
+  const lower = text.toLowerCase().trim();
+  let steps = [];
+
+  if(lower.includes('transfer') && lower.includes('token')){
+    steps = [
+      {assert:{condition:{compare:{left:{get:['balances','from']},op:'>=',right:{get:'amount'}}},message:'Insufficient balance'}},
+      {let:{newFrom:{expr:{sub:[{get:['balances','from']},{get:'amount'}]}},newTo:{expr:{add:[{get:['balances','to']},{get:'amount'}]}}}},
+      {set:{target:['balances','from'],value:{get:'newFrom'}}},
+      {set:{target:['balances','to'],value:{get:'newTo'}}},
+      {log:{level:'info',message:['Transferred',{get:'amount'},'from',{get:'from'},'to',{get:'to'}]}},
+      {return:{success:true,newBalances:{get:'balances'}}}
+    ];
+  } else if(lower.includes('governance') || lower.includes('proposal')){
+    steps = [
+      {let:{totalVotes:{expr:{add:[{get:'votesFor'},{get:'votesAgainst'}]}}}},
+      {if:{condition:{compare:{left:'totalVotes',op:'>',right:0}},then:[
+        {let:{pass:{expr:{div:[{expr:{mul:[{get:'votesFor'},100]}},{get:'totalVotes'}]}}}}
+      ]}},
+      {if:{condition:{compare:{left:'pass',op:'>=',right:50}},then:[
+        {set:{target:'status',value:'approved'}},
+        {log:{level:'info',message:['Proposal approved with',{get:'pass'},'percent']}}
+      ],else:[
+        {set:{target:'status',value:'rejected'}},
+        {log:{level:'info',message:['Proposal rejected']}}
+      ]}},
+      {return:{get:'status'}}
+    ];
+  } else {
+    steps = [{log:{level:'info',message:[text]}}];
+  }
+
+  return {
+    function: 'generated_contract',
+    steps: steps
+  };
+}
+
+function mockCompileToJS(jsonFlow){
+  let code = '// Generated from JSONFlow\n\n';
+  jsonFlow.steps?.forEach(s => {
+    if(s.assert) code += `if (!(${mockExpr(s.assert.condition)})) throw new Error("${s.assert.message}");\n`;
+    if(s.let)    code += Object.entries(s.let).map(([k,v])=>`let ${k} = ${mockValue(v)};\n`).join('');
+    if(s.set)    code += `${s.set.target.join?.('.') || s.set.target} = ${mockValue(s.set.value)};\n`;
+    if(s.log)    code += `console.log(${mockValue(s.log.message)});\n`;
+    if(s.return) code += `return ${mockValue(s.return)};\n`;
+  });
+  return code || '// No steps';
+}
+
+function mockCompileToSolidity(jsonFlow){
+  let code = '// SPDX-License-Identifier: MIT\npragma solidity ^0.8.0;\n\ncontract Generated {\n';
+  jsonFlow.steps?.forEach(s => {
+    if(s.assert) code += `    require(${mockExpr(s.assert.condition)}, "${s.assert.message}");\n`;
+    if(s.log)    code += `    emit Log(${mockValue(s.log.message)});\n`;
+  });
+  code += '}\n';
+  return code;
+}
+
+function mockExpr(expr){
+  if(expr?.compare) return `${mockValue(expr.compare.left)} ${expr.compare.op} ${mockValue(expr.compare.right)}`;
+  return 'true';
+}
+
+function mockValue(v){
+  if(typeof v === 'object'){
+    if(v.get) return v.get.join?.('.') || v.get;
+    if(v.expr?.add) return v.expr.add.map(mockValue).join(' + ');
+    return JSON.stringify(v);
+  }
+  return JSON.stringify(v);
+}
+
+function registerContract(){
+  const text = document.getElementById('nlInput').value.trim();
+  const name = document.getElementById('contractName').value.trim() || 'GeneratedContract';
+  if(!text) return showStatus('Please enter a description','error');
+
+  try {
+    currentJSONFlow = mockNaturalToJSONFlow(text);
+    currentContractName = name;
+
+    document.getElementById('jsonflowOutput').textContent = JSON.stringify(currentJSONFlow, null, 2);
+    document.getElementById('jsOutput').textContent = mockCompileToJS(currentJSONFlow);
+    document.getElementById('solidityOutput').textContent = mockCompileToSolidity(currentJSONFlow);
+    document.getElementById('execOutput').textContent = 'Ready to execute — click "Execute Contract" after compiling';
+
+    showStatus(`Contract "${name}" registered successfully!`);
+  } catch(e){
+    showStatus('Error: ' + e.message, 'error');
+  }
+}
+
+function escapeHtml(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML;}
+</script>
+</body>
+</html>

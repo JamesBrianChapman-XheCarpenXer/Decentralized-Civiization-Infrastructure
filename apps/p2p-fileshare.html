@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P2P FileShare - Decentralized File System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .upload-zone {
+            border: 3px dashed #667eea;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9ff;
+        }
+
+        .upload-zone:hover {
+            background: #eef1ff;
+            border-color: #764ba2;
+        }
+
+        .upload-zone.dragover {
+            background: #e0e7ff;
+            transform: scale(1.02);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: transform 0.2s;
+            margin: 5px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .peer-id {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            word-break: break-all;
+            margin: 10px 0;
+            font-size: 0.9em;
+        }
+
+        .peer-status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .peer-status.online {
+            background: #10b981;
+            box-shadow: 0 0 8px #10b981;
+        }
+
+        .peer-status.offline {
+            background: #ef4444;
+        }
+
+        .file-item {
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .file-meta {
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .hash-display {
+            font-family: monospace;
+            font-size: 0.75em;
+            color: #667eea;
+            background: white;
+            padding: 5px 8px;
+            border-radius: 4px;
+            margin-top: 5px;
+            word-break: break-all;
+        }
+
+        .peer-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .peer-item {
+            padding: 10px;
+            background: #f8f9ff;
+            margin: 5px 0;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            font-size: 0.9em;
+        }
+
+        .connect-section {
+            margin-top: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1em;
+            margin: 10px 0;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .log {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.85em;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+
+        .log-entry {
+            margin: 3px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌐 P2P FileShare</h1>
+            <p>Decentralized file sharing with content addressing - No servers, pure browser P2P</p>
+        </div>
+
+        <div class="main-grid">
+            <div class="card">
+                <h2>📤 Share Files</h2>
+                <div class="upload-zone" id="uploadZone">
+                    <p style="font-size: 3em; margin-bottom: 10px;">📁</p>
+                    <p><strong>Drop files here or click to browse</strong></p>
+                    <p style="font-size: 0.9em; color: #666; margin-top: 10px;">Files are chunked and content-addressed</p>
+                </div>
+                <input type="file" id="fileInput" multiple>
+                
+                <div id="fileList" style="margin-top: 20px;"></div>
+            </div>
+
+            <div class="card">
+                <h2>🔗 Network Status</h2>
+                <div>
+                    <strong>Your Peer ID:</strong>
+                    <div class="peer-id" id="peerId">Initializing...</div>
+                    <button onclick="copyPeerId()">📋 Copy ID</button>
+                </div>
+
+                <div class="connect-section">
+                    <strong>Connect to Peer:</strong>
+                    <input type="text" id="remotePeerId" placeholder="Paste peer ID here">
+                    <button onclick="connectToPeer()">🤝 Connect</button>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <strong>Connected Peers (<span id="peerCount">0</span>):</strong>
+                    <div class="peer-list" id="peerList"></div>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-box">
+                        <div class="stat-value" id="filesShared">0</div>
+                        <div class="stat-label">Files Shared</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="bytesShared">0</div>
+                        <div class="stat-label">Bytes Shared</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="chunksStored">0</div>
+                        <div class="stat-label">Chunks Stored</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📥 Download Files</h2>
+            <input type="text" id="fileHash" placeholder="Enter file hash (CID) to download">
+            <button onclick="requestFile()">⬇️ Download</button>
+            <div id="downloadProgress"></div>
+            <div id="downloadList"></div>
+        </div>
+
+        <div class="card">
+            <h2>📊 System Log</h2>
+            <div class="log" id="systemLog"></div>
+        </div>
+    </div>
+
+    <script>
+        // Core P2P File Sharing System
+        class P2PFileSystem {
+            constructor() {
+                this.peerId = this.generatePeerId();
+                this.peers = new Map(); // peerId -> RTCPeerConnection
+                this.dataChannels = new Map(); // peerId -> RTCDataChannel
+                this.fileStore = new Map(); // hash -> {file, chunks, metadata}
+                this.chunkStore = new Map(); // chunkHash -> Uint8Array
+                this.pendingDownloads = new Map(); // hash -> {chunks, metadata}
+                
+                this.CHUNK_SIZE = 16384; // 16KB chunks
+                this.stats = {
+                    filesShared: 0,
+                    bytesShared: 0,
+                    chunksStored: 0
+                };
+
+                this.init();
+            }
+
+            generatePeerId() {
+                return 'peer_' + Array.from(crypto.getRandomValues(new Uint8Array(16)))
+                    .map(b => b.toString(16).padStart(2, '0'))
+                    .join('');
+            }
+
+            init() {
+                this.log('System initialized');
+                this.log(`Peer ID: ${this.peerId}`);
+                this.updateUI();
+            }
+
+            async createOffer(targetPeerId) {
+                const pc = new RTCPeerConnection({
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' }
+                    ]
+                });
+
+                this.setupPeerConnection(pc, targetPeerId);
+
+                const dc = pc.createDataChannel('fileTransfer', {
+                    ordered: true,
+                    maxRetransmits: 3
+                });
+                this.setupDataChannel(dc, targetPeerId);
+
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+
+                return {
+                    offer: pc.localDescription,
+                    peerId: this.peerId
+                };
+            }
+
+            async handleOffer(offerData) {
+                const pc = new RTCPeerConnection({
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' }
+                    ]
+                });
+
+                this.setupPeerConnection(pc, offerData.peerId);
+
+                pc.ondatachannel = (event) => {
+                    this.setupDataChannel(event.channel, offerData.peerId);
+                };
+
+                await pc.setRemoteDescription(offerData.offer);
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+
+                return {
+                    answer: pc.localDescription,
+                    peerId: this.peerId
+                };
+            }
+
+            async handleAnswer(answerData, targetPeerId) {
+                const pc = this.peers.get(targetPeerId);
+                if (pc) {
+                    await pc.setRemoteDescription(answerData.answer);
+                }
+            }
+
+            setupPeerConnection(pc, peerId) {
+                this.peers.set(peerId, pc);
+
+                pc.oniceconnectionstatechange = () => {
+                    this.log(`ICE state with ${peerId.slice(0, 12)}: ${pc.iceConnectionState}`);
+                    if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
+                        this.removePeer(peerId);
+                    }
+                };
+
+                pc.onconnectionstatechange = () => {
+                    this.log(`Connection state with ${peerId.slice(0, 12)}: ${pc.connectionState}`);
+                    this.updateUI();
+                };
+            }
+
+            setupDataChannel(dc, peerId) {
+                this.dataChannels.set(peerId, dc);
+
+                dc.onopen = () => {
+                    this.log(`✅ Connected to peer: ${peerId.slice(0, 12)}...`);
+                    this.updateUI();
+                    // Share our file catalog
+                    this.sendFileCatalog(peerId);
+                };
+
+                dc.onclose = () => {
+                    this.log(`Disconnected from peer: ${peerId.slice(0, 12)}...`);
+                    this.removePeer(peerId);
+                };
+
+                dc.onmessage = (event) => {
+                    this.handleMessage(event.data, peerId);
+                };
+
+                dc.onerror = (error) => {
+                    this.log(`Error with peer ${peerId.slice(0, 12)}: ${error}`);
+                };
+            }
+
+            removePeer(peerId) {
+                this.peers.delete(peerId);
+                this.dataChannels.delete(peerId);
+                this.updateUI();
+            }
+
+            async handleMessage(data, fromPeer) {
+                try {
+                    const message = JSON.parse(data);
+
+                    switch (message.type) {
+                        case 'catalog':
+                            this.handleCatalog(message.files, fromPeer);
+                            break;
+                        case 'request':
+                            await this.handleFileRequest(message.hash, fromPeer);
+                            break;
+                        case 'chunk':
+                            this.handleChunk(message, fromPeer);
+                            break;
+                        case 'metadata':
+                            this.handleMetadata(message, fromPeer);
+                            break;
+                    }
+                } catch (e) {
+                    // Binary chunk data
+                    this.log(`Received binary data from ${fromPeer.slice(0, 12)}`);
+                }
+            }
+
+            handleCatalog(files, fromPeer) {
+                this.log(`Received catalog from ${fromPeer.slice(0, 12)}: ${files.length} files`);
+            }
+
+            sendFileCatalog(peerId) {
+                const dc = this.dataChannels.get(peerId);
+                if (!dc || dc.readyState !== 'open') return;
+
+                const catalog = Array.from(this.fileStore.values()).map(f => ({
+                    hash: f.hash,
+                    name: f.metadata.name,
+                    size: f.metadata.size,
+                    type: f.metadata.type
+                }));
+
+                dc.send(JSON.stringify({
+                    type: 'catalog',
+                    files: catalog
+                }));
+            }
+
+            async addFile(file) {
+                this.log(`Adding file: ${file.name} (${this.formatBytes(file.size)})`);
+                
+                const chunks = await this.chunkFile(file);
+                const hash = await this.hashFile(file);
+                
+                const metadata = {
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    chunkCount: chunks.length,
+                    timestamp: Date.now()
+                };
+
+                this.fileStore.set(hash, {
+                    file,
+                    chunks,
+                    hash,
+                    metadata
+                });
+
+                // Store chunks
+                for (let i = 0; i < chunks.length; i++) {
+                    const chunkHash = await this.hashChunk(chunks[i]);
+                    this.chunkStore.set(chunkHash, chunks[i]);
+                    this.stats.chunksStored++;
+                }
+
+                this.stats.filesShared++;
+                this.stats.bytesShared += file.size;
+
+                this.log(`✅ File added with hash: ${hash}`);
+                this.updateUI();
+
+                // Broadcast to all peers
+                this.dataChannels.forEach((dc, peerId) => {
+                    if (dc.readyState === 'open') {
+                        this.sendFileCatalog(peerId);
+                    }
+                });
+
+                return hash;
+            }
+
+            async chunkFile(file) {
+                const chunks = [];
+                let offset = 0;
+
+                while (offset < file.size) {
+                    const chunk = file.slice(offset, offset + this.CHUNK_SIZE);
+                    const buffer = await chunk.arrayBuffer();
+                    chunks.push(new Uint8Array(buffer));
+                    offset += this.CHUNK_SIZE;
+                }
+
+                return chunks;
+            }
+
+            async hashFile(file) {
+                const buffer = await file.arrayBuffer();
+                const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+                return this.bufferToHex(hashBuffer);
+            }
+
+            async hashChunk(chunk) {
+                const hashBuffer = await crypto.subtle.digest('SHA-256', chunk);
+                return this.bufferToHex(hashBuffer);
+            }
+
+            bufferToHex(buffer) {
+                return Array.from(new Uint8Array(buffer))
+                    .map(b => b.toString(16).padStart(2, '0'))
+                    .join('');
+            }
+
+            async handleFileRequest(hash, fromPeer) {
+                this.log(`Peer ${fromPeer.slice(0, 12)} requested file: ${hash.slice(0, 16)}...`);
+                
+                const fileData = this.fileStore.get(hash);
+                if (!fileData) {
+                    this.log(`File not found: ${hash}`);
+                    return;
+                }
+
+                const dc = this.dataChannels.get(fromPeer);
+                if (!dc || dc.readyState !== 'open') return;
+
+                // Send metadata first
+                dc.send(JSON.stringify({
+                    type: 'metadata',
+                    hash: hash,
+                    metadata: fileData.metadata
+                }));
+
+                // Send chunks
+                for (let i = 0; i < fileData.chunks.length; i++) {
+                    const chunkHash = await this.hashChunk(fileData.chunks[i]);
+                    
+                    // Add small delay to prevent overwhelming the channel
+                    await new Promise(resolve => setTimeout(resolve, 10));
+                    
+                    dc.send(JSON.stringify({
+                        type: 'chunk',
+                        hash: hash,
+                        chunkIndex: i,
+                        chunkHash: chunkHash,
+                        data: Array.from(fileData.chunks[i])
+                    }));
+                }
+
+                this.log(`✅ Sent file to ${fromPeer.slice(0, 12)}`);
+            }
+
+            handleMetadata(message, fromPeer) {
+                this.log(`Receiving file: ${message.metadata.name}`);
+                
+                this.pendingDownloads.set(message.hash, {
+                    metadata: message.metadata,
+                    chunks: new Array(message.metadata.chunkCount),
+                    receivedChunks: 0
+                });
+
+                this.updateDownloadProgress(message.hash);
+            }
+
+            handleChunk(message, fromPeer) {
+                const download = this.pendingDownloads.get(message.hash);
+                if (!download) return;
+
+                download.chunks[message.chunkIndex] = new Uint8Array(message.data);
+                download.receivedChunks++;
+
+                this.updateDownloadProgress(message.hash);
+
+                if (download.receivedChunks === download.metadata.chunkCount) {
+                    this.completeDownload(message.hash, download);
+                }
+            }
+
+            completeDownload(hash, download) {
+                this.log(`✅ Download complete: ${download.metadata.name}`);
+
+                // Combine chunks
+                const totalSize = download.chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+                const combined = new Uint8Array(totalSize);
+                let offset = 0;
+                
+                for (const chunk of download.chunks) {
+                    combined.set(chunk, offset);
+                    offset += chunk.length;
+                }
+
+                // Create blob and download
+                const blob = new Blob([combined], { type: download.metadata.type });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = download.metadata.name;
+                a.click();
+                
+                URL.revokeObjectURL(url);
+                this.pendingDownloads.delete(hash);
+                this.updateDownloadProgress(hash);
+            }
+
+            requestFile(hash) {
+                this.log(`Requesting file: ${hash.slice(0, 16)}...`);
+                
+                // Request from all connected peers
+                this.dataChannels.forEach((dc, peerId) => {
+                    if (dc.readyState === 'open') {
+                        dc.send(JSON.stringify({
+                            type: 'request',
+                            hash: hash
+                        }));
+                    }
+                });
+            }
+
+            updateDownloadProgress(hash) {
+                const download = this.pendingDownloads.get(hash);
+                const container = document.getElementById('downloadProgress');
+                
+                if (!download) {
+                    container.innerHTML = '';
+                    return;
+                }
+
+                const progress = (download.receivedChunks / download.metadata.chunkCount) * 100;
+                
+                container.innerHTML = `
+                    <div style="margin-top: 15px;">
+                        <strong>${download.metadata.name}</strong>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progress}%"></div>
+                        </div>
+                        <div style="font-size: 0.9em; color: #666; margin-top: 5px;">
+                            ${download.receivedChunks} / ${download.metadata.chunkCount} chunks
+                            (${progress.toFixed(1)}%)
+                        </div>
+                    </div>
+                `;
+            }
+
+            log(message) {
+                const logDiv = document.getElementById('systemLog');
+                const timestamp = new Date().toLocaleTimeString();
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                entry.textContent = `[${timestamp}] ${message}`;
+                logDiv.appendChild(entry);
+                logDiv.scrollTop = logDiv.scrollHeight;
+            }
+
+            formatBytes(bytes) {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+            }
+
+            updateUI() {
+                document.getElementById('peerId').textContent = this.peerId;
+                document.getElementById('peerCount').textContent = this.dataChannels.size;
+                document.getElementById('filesShared').textContent = this.stats.filesShared;
+                document.getElementById('bytesShared').textContent = this.formatBytes(this.stats.bytesShared);
+                document.getElementById('chunksStored').textContent = this.stats.chunksStored;
+
+                // Update peer list
+                const peerListDiv = document.getElementById('peerList');
+                peerListDiv.innerHTML = '';
+                
+                this.dataChannels.forEach((dc, peerId) => {
+                    const isOnline = dc.readyState === 'open';
+                    const peerDiv = document.createElement('div');
+                    peerDiv.className = 'peer-item';
+                    peerDiv.innerHTML = `
+                        <span class="peer-status ${isOnline ? 'online' : 'offline'}"></span>
+                        <span>${peerId.slice(0, 16)}...</span>
+                    `;
+                    peerListDiv.appendChild(peerDiv);
+                });
+
+                // Update file list
+                const fileListDiv = document.getElementById('fileList');
+                fileListDiv.innerHTML = '';
+                
+                this.fileStore.forEach((fileData) => {
+                    const fileDiv = document.createElement('div');
+                    fileDiv.className = 'file-item';
+                    fileDiv.innerHTML = `
+                        <div class="file-info">
+                            <div class="file-name">${fileData.metadata.name}</div>
+                            <div class="file-meta">
+                                ${this.formatBytes(fileData.metadata.size)} • 
+                                ${fileData.metadata.chunkCount} chunks
+                            </div>
+                            <div class="hash-display">${fileData.hash}</div>
+                        </div>
+                        <button onclick="copyHash('${fileData.hash}')">📋 Copy Hash</button>
+                    `;
+                    fileListDiv.appendChild(fileDiv);
+                });
+            }
+        }
+
+        // Global instance
+        const p2pfs = new P2PFileSystem();
+
+        // UI Event Handlers
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadZone.onclick = () => fileInput.click();
+
+        uploadZone.ondragover = (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        };
+
+        uploadZone.ondragleave = () => {
+            uploadZone.classList.remove('dragover');
+        };
+
+        uploadZone.ondrop = async (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            
+            const files = Array.from(e.dataTransfer.files);
+            for (const file of files) {
+                await p2pfs.addFile(file);
+            }
+        };
+
+        fileInput.onchange = async (e) => {
+            const files = Array.from(e.target.files);
+            for (const file of files) {
+                await p2pfs.addFile(file);
+            }
+            fileInput.value = '';
+        };
+
+        function copyPeerId() {
+            navigator.clipboard.writeText(p2pfs.peerId);
+            p2pfs.log('Peer ID copied to clipboard');
+        }
+
+        function copyHash(hash) {
+            navigator.clipboard.writeText(hash);
+            p2pfs.log('Hash copied to clipboard');
+        }
+
+        async function connectToPeer() {
+            const input = document.getElementById('remotePeerId');
+            const remotePeerId = input.value.trim();
+            
+            if (!remotePeerId) {
+                alert('Please enter a peer ID');
+                return;
+            }
+
+            p2pfs.log('Creating connection offer...');
+            
+            const offerData = await p2pfs.createOffer(remotePeerId);
+            
+            // In a real app, this would go through a signaling server
+            // For demo, we'll use prompt/alert
+            const offerString = JSON.stringify(offerData);
+            
+            prompt('Send this offer to the other peer:', offerString);
+            
+            const answerString = prompt('Paste the answer from the other peer:');
+            
+            if (answerString) {
+                try {
+                    const answerData = JSON.parse(answerString);
+                    await p2pfs.handleAnswer(answerData, remotePeerId);
+                    input.value = '';
+                } catch (e) {
+                    alert('Invalid answer format');
+                }
+            }
+        }
+
+        // Listen for incoming connections
+        window.acceptConnection = async function() {
+            const offerString = prompt('Paste the offer from the other peer:');
+            
+            if (offerString) {
+                try {
+                    const offerData = JSON.parse(offerString);
+                    const answerData = await p2pfs.handleOffer(offerData);
+                    
+                    prompt('Send this answer back to the other peer:', JSON.stringify(answerData));
+                } catch (e) {
+                    alert('Invalid offer format');
+                }
+            }
+        };
+
+        function requestFile() {
+            const hash = document.getElementById('fileHash').value.trim();
+            if (!hash) {
+                alert('Please enter a file hash');
+                return;
+            }
+            
+            p2pfs.requestFile(hash);
+            document.getElementById('fileHash').value = '';
+        }
+    </script>
+</body>
+</html>

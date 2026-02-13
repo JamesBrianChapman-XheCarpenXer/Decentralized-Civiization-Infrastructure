@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SRCP Persistence Test</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      color: #00ff88;
+    }
+
+    .section {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      color: #00ff88;
+      margin-bottom: 15px;
+      font-size: 18px;
+    }
+
+    button {
+      background: #00ff88;
+      color: #0a0a0a;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+
+    button:hover {
+      background: #00dd77;
+    }
+
+    button.danger {
+      background: #ff4444;
+      color: white;
+    }
+
+    button.danger:hover {
+      background: #dd3333;
+    }
+
+    .status {
+      padding: 10px;
+      background: #2a2a2a;
+      border-radius: 4px;
+      margin-top: 10px;
+      font-family: monospace;
+      font-size: 14px;
+    }
+
+    .success {
+      color: #00ff88;
+    }
+
+    .error {
+      color: #ff4444;
+    }
+
+    .info {
+      color: #4488ff;
+    }
+
+    input {
+      background: #2a2a2a;
+      border: 1px solid #444;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin-right: 10px;
+    }
+
+    pre {
+      background: #0a0a0a;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 SRCP Persistence Test Suite</h1>
+    
+    <!-- Identity Tests -->
+    <div class="section">
+      <h2>1. Identity Persistence</h2>
+      <div>
+        <input type="text" id="username" placeholder="Enter username" value="TestUser">
+        <button onclick="createIdentity()">Create New Identity</button>
+        <button onclick="loadIdentity()">Load Saved Identity</button>
+        <button onclick="checkIdentity()">Check Current Identity</button>
+        <button class="danger" onclick="clearIdentity()">Clear Identity</button>
+      </div>
+      <div class="status" id="identityStatus">Status: No identity loaded</div>
+      <pre id="identityData"></pre>
+    </div>
+
+    <!-- Message Persistence Tests -->
+    <div class="section">
+      <h2>2. Message Persistence</h2>
+      <div>
+        <button onclick="addTestMessage()">Add Test Message</button>
+        <button onclick="loadMessages()">Load Messages</button>
+        <button onclick="showMessageCount()">Show Message Count</button>
+        <button class="danger" onclick="clearMessages()">Clear All Messages</button>
+      </div>
+      <div class="status" id="messageStatus">Status: No messages loaded</div>
+      <pre id="messageData"></pre>
+    </div>
+
+    <!-- Storage Tests -->
+    <div class="section">
+      <h2>3. Storage Health Check</h2>
+      <div>
+        <button onclick="checkStorage()">Check All Storage</button>
+        <button onclick="testCrossTabs()">Test Cross-Tab (Open New Tab)</button>
+        <button class="danger" onclick="clearAllStorage()">Clear All Storage</button>
+      </div>
+      <div class="status" id="storageStatus">Click "Check All Storage" to see status</div>
+      <pre id="storageData"></pre>
+    </div>
+
+    <!-- Legacy Migration Test -->
+    <div class="section">
+      <h2>4. Legacy Version Migration</h2>
+      <div>
+        <button onclick="createLegacyIdentity()">Create Legacy v1.0 Identity</button>
+        <button onclick="testMigration()">Test Migration to v5.0.0</button>
+      </div>
+      <div class="status" id="migrationStatus">Click to test migration</div>
+      <pre id="migrationData"></pre>
+    </div>
+  </div>
+
+  <script type="module">
+    import { Identity } from './srcp/src/identity.js';
+    import { MessagingProtocol } from './srcp/src/messaging-protocol.js';
+    
+    window.Identity = Identity;
+    window.currentIdentity = null;
+    window.messageCount = 0;
+
+    // Identity Tests
+    window.createIdentity = async function() {
+      try {
+        const username = document.getElementById('username').value || 'TestUser';
+        const identity = await Identity.create(username);
+        
+        const exported = await identity.export();
+        localStorage.setItem('srcp_identity', JSON.stringify(exported));
+        
+        window.currentIdentity = identity;
+        
+        document.getElementById('identityStatus').innerHTML = 
+          `<span class="success">✓ Identity created successfully!</span>`;
+        document.getElementById('identityData').textContent = 
+          JSON.stringify(exported, null, 2);
+      } catch (error) {
+        document.getElementById('identityStatus').innerHTML = 
+          `<span class="error">✗ Error: ${error.message}</span>`;
+      }
+    };
+
+    window.loadIdentity = async function() {
+      try {
+        const saved = localStorage.getItem('srcp_identity');
+        if (!saved) {
+          document.getElementById('identityStatus').innerHTML = 
+            `<span class="info">ℹ No saved identity found</span>`;
+          return;
+        }
+
+        const data = JSON.parse(saved);
+        const identity = await Identity.import(data);
+        window.currentIdentity = identity;
+        
+        document.getElementById('identityStatus').innerHTML = 
+          `<span class="success">✓ Identity loaded! Version: ${data.version}</span>`;
+        document.getElementById('identityData').textContent = 
+          JSON.stringify(data, null, 2);
+      } catch (error) {
+        document.getElementById('identityStatus').innerHTML = 
+          `<span class="error">✗ Error: ${error.message}</span>`;
+        console.error(error);
+      }
+    };
+
+    window.checkIdentity = function() {
+      if (window.currentIdentity) {
+        const info = window.currentIdentity.getPublicInfo();
+        document.getElementById('identityStatus').innerHTML = 
+          `<span class="success">✓ Identity active</span>`;
+        document.getElementById('identityData').textContent = 
+          JSON.stringify(info, null, 2);
+      } else {
+        document.getElementById('identityStatus').innerHTML = 
+          `<span class="error">✗ No identity in memory</span>`;
+      }
+    };
+
+    window.clearIdentity = function() {
+      localStorage.removeItem('srcp_identity');
+      window.currentIdentity = null;
+      document.getElementById('identityStatus').innerHTML = 
+        `<span class="info">ℹ Identity cleared</span>`;
+      document.getElementById('identityData').textContent = '';
+    };
+
+    // Message Tests
+    window.addTestMessage = function() {
+      const conversations = JSON.parse(localStorage.getItem('srcp_conversations') || '{"conversations":[],"unreadCounts":[],"channels":[]}');
+      
+      const testDID = 'did:srcp:test' + Math.random().toString(36).substr(2, 9);
+      const message = {
+        id: 'msg_' + Date.now(),
+        from: 'did:srcp:sender',
+        to: testDID,
+        content: 'Test message ' + (++window.messageCount),
+        timestamp: Date.now()
+      };
+
+      // Add to conversations
+      let found = false;
+      for (let i = 0; i < conversations.conversations.length; i++) {
+        if (conversations.conversations[i][0] === testDID) {
+          conversations.conversations[i][1].push(message);
+          found = true;
+          break;
+        }
+      }
+      
+      if (!found) {
+        conversations.conversations.push([testDID, [message]]);
+      }
+
+      localStorage.setItem('srcp_conversations', JSON.stringify(conversations));
+      
+      document.getElementById('messageStatus').innerHTML = 
+        `<span class="success">✓ Test message added!</span>`;
+      window.loadMessages();
+    };
+
+    window.loadMessages = function() {
+      const saved = localStorage.getItem('srcp_conversations');
+      if (!saved) {
+        document.getElementById('messageStatus').innerHTML = 
+          `<span class="info">ℹ No saved messages</span>`;
+        return;
+      }
+
+      const data = JSON.parse(saved);
+      let totalMessages = 0;
+      
+      data.conversations.forEach(([did, messages]) => {
+        totalMessages += messages.length;
+      });
+
+      document.getElementById('messageStatus').innerHTML = 
+        `<span class="success">✓ Loaded ${totalMessages} messages across ${data.conversations.length} conversations</span>`;
+      document.getElementById('messageData').textContent = 
+        JSON.stringify(data, null, 2);
+    };
+
+    window.showMessageCount = function() {
+      const saved = localStorage.getItem('srcp_conversations');
+      if (!saved) {
+        document.getElementById('messageStatus').innerHTML = 
+          `<span class="info">ℹ No messages</span>`;
+        return;
+      }
+
+      const data = JSON.parse(saved);
+      let totalMessages = 0;
+      
+      data.conversations.forEach(([did, messages]) => {
+        totalMessages += messages.length;
+      });
+
+      alert(`Total messages: ${totalMessages}\nConversations: ${data.conversations.length}`);
+    };
+
+    window.clearMessages = function() {
+      localStorage.removeItem('srcp_conversations');
+      document.getElementById('messageStatus').innerHTML = 
+        `<span class="info">ℹ Messages cleared</span>`;
+      document.getElementById('messageData').textContent = '';
+    };
+
+    // Storage Tests
+    window.checkStorage = function() {
+      const storage = {
+        identity: !!localStorage.getItem('srcp_identity'),
+        balance: localStorage.getItem('srcp_balance'),
+        transactions: !!localStorage.getItem('srcp_transactions'),
+        conversations: !!localStorage.getItem('srcp_conversations')
+      };
+
+      let status = '';
+      let healthy = true;
+
+      if (storage.identity) {
+        status += '<span class="success">✓ Identity: Present</span><br>';
+      } else {
+        status += '<span class="error">✗ Identity: Missing</span><br>';
+        healthy = false;
+      }
+
+      if (storage.balance !== null) {
+        status += `<span class="success">✓ Balance: ${storage.balance}</span><br>`;
+      } else {
+        status += '<span class="info">ℹ Balance: Not set</span><br>';
+      }
+
+      if (storage.transactions) {
+        status += '<span class="success">✓ Transactions: Present</span><br>';
+      } else {
+        status += '<span class="info">ℹ Transactions: Empty</span><br>';
+      }
+
+      if (storage.conversations) {
+        status += '<span class="success">✓ Conversations: Present</span><br>';
+      } else {
+        status += '<span class="info">ℹ Conversations: Empty</span><br>';
+      }
+
+      document.getElementById('storageStatus').innerHTML = status;
+      document.getElementById('storageData').textContent = 
+        JSON.stringify({
+          localStorage: Object.keys(localStorage).filter(k => k.startsWith('srcp_')),
+          sizes: {
+            total: JSON.stringify(localStorage).length,
+            identity: (localStorage.getItem('srcp_identity') || '').length,
+            conversations: (localStorage.getItem('srcp_conversations') || '').length
+          }
+        }, null, 2);
+    };
+
+    window.testCrossTabs = function() {
+      // Save test data
+      localStorage.setItem('srcp_cross_tab_test', Date.now().toString());
+      
+      // Open new tab
+      window.open(window.location.href, '_blank');
+      
+      document.getElementById('storageStatus').innerHTML = 
+        `<span class="info">ℹ New tab opened. Check if data persists there.</span>`;
+    };
+
+    window.clearAllStorage = function() {
+      if (confirm('Clear ALL SRCP data from localStorage?')) {
+        const keys = Object.keys(localStorage).filter(k => k.startsWith('srcp_'));
+        keys.forEach(k => localStorage.removeItem(k));
+        
+        document.getElementById('storageStatus').innerHTML = 
+          `<span class="info">ℹ All SRCP storage cleared (${keys.length} keys removed)</span>`;
+        document.getElementById('storageData').textContent = '';
+      }
+    };
+
+    // Legacy Migration Tests
+    window.createLegacyIdentity = async function() {
+      // Create a v5.0.0 identity first
+      const identity = await Identity.create('LegacyUser');
+      const exported = await identity.export();
+      
+      // Modify it to look like v1.0
+      const legacy = {
+        version: '1.0',
+        username: exported.username,
+        did: exported.did,
+        publicKey: exported.publicKey,
+        privateKey: exported.privateKey,
+        created: exported.created
+      };
+
+      localStorage.setItem('srcp_identity', JSON.stringify(legacy));
+      
+      document.getElementById('migrationStatus').innerHTML = 
+        `<span class="success">✓ Legacy v1.0 identity created</span>`;
+      document.getElementById('migrationData').textContent = 
+        JSON.stringify(legacy, null, 2);
+    };
+
+    window.testMigration = async function() {
+      try {
+        const saved = localStorage.getItem('srcp_identity');
+        if (!saved) {
+          document.getElementById('migrationStatus').innerHTML = 
+            `<span class="error">✗ No identity to migrate</span>`;
+          return;
+        }
+
+        const data = JSON.parse(saved);
+        document.getElementById('migrationStatus').innerHTML = 
+          `<span class="info">ℹ Attempting to import version ${data.version}...</span>`;
+
+        const identity = await Identity.import(data);
+        
+        // Re-export to save migrated version
+        const migrated = await identity.export();
+        localStorage.setItem('srcp_identity', JSON.stringify(migrated));
+        
+        document.getElementById('migrationStatus').innerHTML = 
+          `<span class="success">✓ Successfully migrated from ${data.version} to ${migrated.version}!</span>`;
+        document.getElementById('migrationData').textContent = 
+          JSON.stringify(migrated, null, 2);
+      } catch (error) {
+        document.getElementById('migrationStatus').innerHTML = 
+          `<span class="error">✗ Migration failed: ${error.message}</span>`;
+      }
+    };
+
+    // Auto-load on page load
+    window.addEventListener('load', () => {
+      window.loadIdentity();
+      window.loadMessages();
+      window.checkStorage();
+    });
+
+    // Listen for storage changes from other tabs
+    window.addEventListener('storage', (e) => {
+      if (e.key && e.key.startsWith('srcp_')) {
+        console.log('Storage changed:', e.key);
+        window.checkStorage();
+      }
+    });
+  </script>
+</body>
+</html>
