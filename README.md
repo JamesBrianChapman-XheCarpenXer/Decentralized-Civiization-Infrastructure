@@ -1,66 +1,393 @@
-# SRCP007 - Browser-Native Deterministic Substrate
+# DCI — Decentralized Civilization Infrastructure
 
-**Version:** 1.0.0  
-**Status:** Production-Grade Architecture  
+## SRCP007 — Browser-Native Deterministic Substrate
+
+**Version:** 1.0.0
+**Status:** Civilization-Grade Infrastructure
 **License:** MIT
 
 ---
 
-## 🎯 What Is This?
+# 🌍 What Is DCI?
 
-SRCP007 is a **browser-native deterministic execution substrate** that combines:
+**DCI (Decentralized Civilization Infrastructure)** is a browser-native deterministic execution substrate for sovereign systems.
 
-- **Kernel** - State machine with transaction log
-- **Ledger** - Cryptographically-signed append-only log
-- **DID Router** - Decentralized identifier resolution
-- **Messaging** - P2P communication protocol
-- **TruthRank** - Content quality scoring engine
-- **Token Economics** - Deflationary digital economy
-- **Federation** - Peer-to-peer data synchronization
+SRCP007 is the reference implementation.
 
-This is not a framework. It's a **complete decentralized execution layer** for building web applications that work offline, synchronize peer-to-peer, and maintain cryptographic integrity.
+It combines:
 
----
+* **Kernel** — Deterministic state machine with transaction log
+* **Ledger** — Cryptographically signed append-only history
+* **DID Router** — Decentralized identity resolution
+* **Messaging** — Peer-to-peer protocol layer
+* **TruthRank** — Content legitimacy & quality engine
+* **Token Economics** — Deflationary digital coordination layer
+* **Federation** — Peer-to-peer state synchronization
 
-## 🔒 Core Guarantees
+This is not a framework.
+This is not a library.
 
-### 1. **Deterministic Execution**
-- ✅ NO `Date.now()` or `Math.random()`
-- ✅ Injected logical clock for time
-- ✅ Injected nonce generator for randomness
-- ✅ Reproducible state from transaction log
+It is a **civilization substrate** — a deterministic execution layer for building sovereign applications that:
 
-### 2. **State Integrity**
-- ✅ Single entry point for all mutations
-- ✅ Immutable state snapshots
-- ✅ Cryptographic hash on every state change
-- ✅ Transaction replay for verification
-
-### 3. **Security**
-- ✅ All state changes cryptographically signed
-- ✅ Replay protection via nonce tracking
-- ✅ Identity verification on all actions
-- ✅ Deep freeze on all exported state
-
-### 4. **No External Dependencies**
-- ✅ Pure vanilla JavaScript (ES modules)
-- ✅ Web Crypto API for cryptography
-- ✅ No npm packages required
-- ✅ Runs in browser and Node.js
+* Work offline
+* Synchronize peer-to-peer
+* Maintain cryptographic integrity
+* Reproduce state from history
+* Operate without centralized infrastructure
 
 ---
 
-## 📦 Installation
+# 🔒 Civilizational Guarantees
 
-```bash
-npm install srcp007
+## 1. Deterministic Reality
+
+* ✅ No `Date.now()`
+* ✅ No `Math.random()`
+* ✅ Logical clock injection
+* ✅ Deterministic nonce generation
+* ✅ Replayable state from transaction log
+
+If two nodes replay the same transactions, they reach the same state.
+
+No exceptions.
+
+---
+
+## 2. Immutable Historical Record
+
+* ✅ Single entry point for mutation
+* ✅ Append-only transaction log
+* ✅ Cryptographic hash per state transition
+* ✅ State reproducibility via replay
+
+History defines truth.
+
+---
+
+## 3. Sovereign Identity Enforcement
+
+* ✅ All state changes cryptographically signed
+* ✅ Replay protection via nonce tracking
+* ✅ Identity-bound actions
+* ✅ Deep-frozen exported state
+
+Authority is derived from cryptographic proof — not servers.
+
+---
+
+## 4. Zero External Dependencies
+
+* ✅ Pure ES modules
+* ✅ Web Crypto API
+* ✅ No npm runtime dependencies
+* ✅ Runs in browser & Node.js
+
+Infrastructure should not depend on fragile supply chains.
+
+---
+
+# 🚀 Quick Start
+
+## Boot the Kernel
+
+```javascript
+import { Kernel } from 'srcp007';
+
+const adapters = {
+  clock: {
+    now: () => performance.now(),
+    advance: (n = 1) => performance.now() + n,
+    tick: () => performance.now() + 1
+  },
+  nonce: {
+    generate: () => crypto.randomUUID()
+  },
+  logger: console
+};
+
+const kernel = await Kernel.boot({ adapters });
+
+console.log('DCI Kernel booted', kernel.getState());
 ```
 
-Or use directly in browser:
+---
 
-```html
-<script type="module">
-  import { Kernel } from './src/kernel.js';
+## Execute a Civilizational Transaction
+
+```javascript
+const result = await kernel.executeTransaction('ledger.append', {
+  action: 'publish',
+  data: {
+    title: 'First Sovereign Record',
+    content: 'Civilization begins with determinism.'
+  }
+});
+
+console.log('Transaction hash:', result.transaction.hash);
+console.log('State hash:', result.stateHash);
+```
+
+---
+
+## Verify Integrity
+
+```javascript
+const verification = await kernel.verifyIntegrity();
+
+if (verification.valid) {
+  console.log('DCI integrity verified');
+} else {
+  console.log('Integrity violation detected');
+}
+```
+
+---
+
+# 🏗️ DCI Architecture
+
+## Kernel — Deterministic State Machine
+
+Single mutation entry point:
+
+```
+APPLICATION
+     │
+     ▼
+executeTransaction(type, payload)
+     │
+     ▼
+Deterministic State Transition
+     │
+     ▼
+Immutable Hashed State
+```
+
+There are no hidden state mutations.
+There is no ambient authority.
+
+---
+
+## Transaction Log — Event-Sourced Civilization
+
+Every mutation:
+
+```javascript
+{
+  type: 'ledger.append',
+  payload: { action: 'publish', data: {...} },
+  nonce: 'nonce_abc123',
+  timestamp: 1000,
+  signature: '0x...',
+  hash: '0x...'
+}
+```
+
+The system can be reconstructed by replaying history.
+
+History is executable.
+
+---
+
+## Ledger — Append-Only Human Record
+
+Each entry:
+
+* Signed by identity
+* Timestamped via logical clock
+* Hashed for integrity
+* Immutable
+
+```javascript
+const entry = await LedgerEntry.create(
+  identity,
+  'publish',
+  { title: 'Record' },
+  logicalTime
+);
+
+await ledger.append(entry);
+```
+
+---
+
+# ⚙️ Kernel Configuration
+
+```javascript
+const kernel = await Kernel.boot({
+  adapters: {
+    clock,
+    nonce,
+    logger,
+    transport,
+    storage
+  },
+  identity,
+  config: {
+    maxTransactionSize: 1024 * 1024,
+    enableReplayProtection: true,
+    enableSignatureValidation: true,
+    lockDate: true,
+    lockMath: true
+  }
+});
+```
+
+---
+
+# 📚 Core APIs
+
+## Kernel
+
+* `Kernel.boot()`
+* `executeTransaction(type, payload)`
+* `getState()`
+* `getTransactionLog()`
+* `replay(transactions)`
+* `verifyIntegrity()`
+* `seal()`
+* `export()`
+
+---
+
+## Ledger
+
+* `append(entry)`
+* `getEntriesByDID(did)`
+* `getEntriesByAction(action)`
+* `verifyAll()`
+* `export(timestamp)`
+
+---
+
+## Identity
+
+* `Identity.generate()`
+* `identity.sign(data)`
+* `Identity.verify(publicKey, data, signature)`
+
+---
+
+# 🌐 Federation Layer
+
+DCI nodes can:
+
+* Exchange ledger deltas
+* Verify remote signatures
+* Merge deterministic histories
+* Reject invalid state
+
+Federation is optional. Determinism is mandatory.
+
+---
+
+# 🔐 Security Model
+
+### Protected Against
+
+* Replay attacks
+* State tampering
+* Identity forgery
+* Non-deterministic divergence
+* Unauthorized transaction injection
+
+### Not Protected Against
+
+* Physical device compromise
+* Private key loss
+* Social engineering
+* Network-layer attacks (use TLS)
+
+---
+
+# 🧪 Determinism Testing
+
+```bash
+npm test
+npm run validate
+```
+
+Validation ensures:
+
+* Replay yields identical state hash
+* No nondeterministic APIs leak
+* Transaction ordering is preserved
+
+---
+
+# 📁 Structure
+
+```
+srcp007/
+  src/
+    kernel.js
+    ledger.js
+    identity.js
+    did-router.js
+    messaging-protocol.js
+    federation.js
+    truthrank-engine.js
+    token-economics.js
+    canonical.js
+    clock.js
+    nonce.js
+```
+
+Each module enforces civilizational constraints.
+
+---
+
+# 🌎 What DCI Enables
+
+* Sovereign social platforms
+* Offline-first governance systems
+* Deterministic digital economies
+* Cryptographically verifiable institutions
+* Peer-synchronized public ledgers
+* Browser-native sovereign computing
+
+DCI is infrastructure for:
+
+* Identity
+* Record
+* Coordination
+* Trust
+* Economic signaling
+
+Without central authority.
+
+---
+
+# 🧠 Philosophical Premise
+
+Civilization requires:
+
+1. Identity
+2. Memory
+3. Determinism
+4. Verifiable history
+5. Coordination
+
+DCI encodes those primitives directly into the execution layer.
+
+---
+
+# 📄 License
+
+MIT
+
+---
+
+# ✊ Final Statement
+
+DCI is not an app.
+It is not a backend.
+It is not a blockchain clone.
+
+It is a **deterministic substrate for decentralized civilization**.
+
+If history is executable,
+and identity is cryptographic,
+then sovereignty is programmable.
   // Your code here
 </script>
 ```
